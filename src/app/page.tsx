@@ -1,101 +1,91 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <main className="mx-auto max-w-5xl px-4">
+      {/* Hero */}
+      <section className="py-20 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          一键生成专业外贸开发信
+        </h1>
+        <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+          输入产品信息，AI 自动生成符合英语母语习惯的开发信。
+          支持冷开发信、跟进信、报价跟进、询盘回复四种类型。
+        </p>
+        <Link
+          href="/tools/cold-email"
+          className="inline-block bg-blue-600 text-white px-8 py-4 rounded-xl text-lg font-medium hover:bg-blue-700"
+        >
+          立即开始免费使用
+        </Link>
+        <p className="mt-4 text-sm text-gray-500">无需注册 · 每天免费生成3封</p>
+      </section>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/* 功能 */}
+      <section className="py-16 grid md:grid-cols-2 gap-6">
+        {[
+          {
+            title: "冷开发信",
+            desc: "首次联系目标客户，开场即吸引注意力",
+            icon: "📧",
+          },
+          {
+            title: "跟进信",
+            desc: "对方未回复时，优雅地持续跟进",
+            icon: "🔄",
+          },
+          {
+            title: "报价跟进",
+            desc: "发完报价后没回应？催单也能有温度",
+            icon: "💰",
+          },
+          {
+            title: "询盘回复",
+            desc: "专业回复客户询盘，留下好印象",
+            icon: "💬",
+          },
+        ].map((item) => (
+          <div
+            key={item.title}
+            className="bg-white rounded-xl p-6 border hover:shadow-md transition"
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <span className="text-3xl">{item.icon}</span>
+            <h3 className="mt-3 font-semibold text-gray-900">{item.title}</h3>
+            <p className="mt-1 text-sm text-gray-600">{item.desc}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* 价格 */}
+      <section id="pricing" className="py-16">
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
+          简单透明的定价
+        </h2>
+        <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <div className="bg-white rounded-xl p-8 border">
+            <h3 className="text-lg font-semibold text-gray-900">免费用户</h3>
+            <p className="text-3xl font-bold mt-4">¥0</p>
+            <ul className="mt-4 space-y-2 text-sm text-gray-600">
+              <li>✅ 每天 3 次生成额度</li>
+              <li>✅ 支持4种写信类型</li>
+              <li>✅ 3种写作风格可选</li>
+            </ul>
+          </div>
+          <div className="bg-blue-600 rounded-xl p-8 text-white">
+            <h3 className="text-lg font-semibold">会员</h3>
+            <p className="text-3xl font-bold mt-4">¥99<span className="text-base font-normal">/月</span></p>
+            <p className="text-sm text-blue-100 mt-1">年卡 ¥599（约5折）</p>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li>✅ 无限次使用</li>
+              <li>✅ 会员专属功能</li>
+              <li>✅ 优先客服支持</li>
+            </ul>
+            <button className="mt-6 w-full bg-white text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-50">
+              联系客服升级
+            </button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </section>
+    </main>
   );
 }
