@@ -39,6 +39,9 @@ export default function Header() {
           <Link href="/#pricing" className="text-sm text-gray-600 hover:text-blue-600">
             价格
           </Link>
+          <Link href="/contact" className="text-sm text-gray-600 hover:text-blue-600">
+            联系我们
+          </Link>
 
           {user ? (
             <div className="flex items-center gap-3">
