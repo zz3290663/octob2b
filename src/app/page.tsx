@@ -56,8 +56,8 @@ export default function Home() {
         ))}
       </section>
 
-      {/* 价格 */}
-      <section id="pricing" className="py-16">
+      {/* 价格 - 暂时隐藏，内部测试阶段 */}
+      {/* <section id="pricing" className="py-16">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
           简单透明的定价
         </h2>
@@ -85,7 +85,7 @@ export default function Home() {
             </button>
           </div>
         </div>
-      </section>
+      </section> */}
     </main>
   );
 }
