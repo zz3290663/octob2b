@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import AuthListener from "@/components/AuthListener";
 
 export const metadata: Metadata = {
   title: "octob2b - 外贸开发信生成器",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="antialiased bg-gray-50">
+        <AuthListener />
         <Header />
         {children}
         <footer className="border-t py-8 text-center text-sm text-gray-500">
