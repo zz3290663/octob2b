@@ -6,6 +6,8 @@ import Link from "next/link";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const supabase = createClient();
@@ -15,8 +17,21 @@ export default function RegisterPage() {
     setLoading(true);
     setMessage(null);
 
-    const { error } = await supabase.auth.signInWithOtp({
+    if (password !== confirmPassword) {
+      setMessage({ type: "error", text: "两次输入的密码不一致" });
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setMessage({ type: "error", text: "密码至少需要6位" });
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({
       email,
+      password,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
 
@@ -25,7 +40,7 @@ export default function RegisterPage() {
     } else {
       setMessage({
         type: "success",
-        text: "注册链接已发送到邮箱，点击链接即可完成注册并登录",
+        text: "验证邮件已发送，请查收邮件并点击链接激活账号，之后即可用邮箱+密码登录",
       });
     }
     setLoading(false);
@@ -65,12 +80,40 @@ export default function RegisterPage() {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                设置密码
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="至少6位"
+                required
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                确认密码
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="再输一次密码"
+                required
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? "发送中..." : "立即注册"}
+              {loading ? "注册中..." : "立即注册"}
             </button>
           </form>
         )}
