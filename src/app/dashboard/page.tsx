@@ -74,6 +74,17 @@ export default async function DashboardPage() {
           </div>
           <span className="text-gray-400">→</span>
         </Link>
+
+        <Link
+          href="/change-password"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">修改密码</p>
+            <p className="text-sm text-gray-500">更新你的登录密码</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
       </div>
     </main>
   );
