@@ -46,8 +46,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* 升级入口（仅非会员） */}
-      {!isPremium && (
+      {/* 升级入口 - 暂时隐藏，内部测试阶段 */}
+      {/* {!isPremium && (
         <div className="mt-8 p-6 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl text-white">
           <h3 className="font-semibold">升级会员，享受无限次</h3>
           <p className="mt-1 text-sm text-blue-100">
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
             扫码升级
           </Link>
         </div>
-      )}
+      )} */}
 
       {/* 快捷链接 */}
       <div className="mt-8 space-y-3">
