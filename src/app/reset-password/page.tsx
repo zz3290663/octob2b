@@ -3,11 +3,10 @@
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
@@ -15,13 +14,23 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (password !== confirmPassword) {
+      setError("两次输入的密码不一致");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("密码至少需要6位");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setError("邮箱或密码错误，请重试");
+      setError("重置失败，请重新申请重置链接");
     } else {
       router.push("/tools/cold-email");
     }
@@ -32,37 +41,34 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-sm border">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">登录 octob2b</h1>
-          <p className="text-sm text-gray-500 mt-2">外贸开发信生成器</p>
+          <h1 className="text-2xl font-bold text-gray-900">设置新密码</h1>
+          <p className="text-sm text-gray-500 mt-2">请输入你的新密码</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              邮箱地址
+              新密码
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="至少6位"
               required
               className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">密码</label>
-              <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">
-                忘记密码？
-              </Link>
-            </div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              确认新密码
+            </label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="输入密码"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="再输一次"
               required
               className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
@@ -79,16 +85,9 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? "登录中..." : "登录"}
+            {loading ? "保存中..." : "保存新密码"}
           </button>
         </form>
-
-        <p className="text-center text-sm text-gray-500 mt-6">
-          还没有账号？{" "}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            免费注册
-          </Link>
-        </p>
       </div>
     </div>
   );
