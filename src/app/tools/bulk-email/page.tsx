@@ -158,7 +158,7 @@ export default function BulkEmailPage() {
     for (const [field, col] of Object.entries(fieldMapping)) {
       if (col && row[col] !== undefined && row[col] !== "") c[field] = row[col];
     }
-    return c as Customer;
+    return c as unknown as Customer;
   };
 
   const validCustomers = rawData
