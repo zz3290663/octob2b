@@ -5,6 +5,67 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const GUIDES: { name: string; steps: string[]; note?: string }[] = [
+  {
+    name: "Gmail（谷歌邮箱）",
+    steps: [
+      "登录 Gmail，右上角头像 → 管理 Google 账号",
+      "顶部菜单点「安全性」",
+      "找到「两步验证」，先开启（必须开启才能用应用密码）",
+      "回到「安全性」页面，找到「应用密码」并点击",
+      "选择应用「邮件」、设备「其他」，随便填个名字如「octob2b」",
+      "点「生成」，复制显示的 16 位密码（只显示一次）",
+      "回到这里，密码/授权码 填这个 16 位密码，不是你的 Gmail 登录密码",
+    ],
+    note: "⚠️ 需要先开启两步验证，才能生成应用密码",
+  },
+  {
+    name: "QQ邮箱",
+    steps: [
+      "登录 QQ 邮箱（mail.qq.com）",
+      "点右上角「设置」→「账户」",
+      "往下滚，找到「POP3/IMAP/SMTP/Exchange/CardDAV/CalDAV服务」",
+      "开启「IMAP/SMTP服务」，按提示发送短信验证",
+      "验证后会显示一串授权码，复制保存",
+      "回到这里，密码/授权码 填这串授权码，不是 QQ 密码",
+    ],
+    note: "⚠️ 密码填授权码，不是 QQ 登录密码",
+  },
+  {
+    name: "163邮箱",
+    steps: [
+      "登录 163 邮箱（mail.163.com）",
+      "点顶部「设置」→「POP3/SMTP/IMAP」",
+      "开启「SMTP服务」",
+      "按提示用手机扫码或发短信验证",
+      "验证后会生成授权密码，复制保存",
+      "回到这里，密码/授权码 填这个授权密码",
+    ],
+    note: "⚠️ 密码填授权密码，不是 163 登录密码",
+  },
+  {
+    name: "企业邮箱（腾讯企业邮）",
+    steps: [
+      "登录企业邮箱后台（exmail.qq.com）",
+      "点右上角头像 → 账号与安全",
+      "找到「安全登录」→「客户端专用密码」",
+      "生成一个专用密码并复制",
+      "回到这里，SMTP 用户名填你的企业邮箱地址，密码填专用密码",
+    ],
+  },
+  {
+    name: "Outlook / 微软邮箱",
+    steps: [
+      "登录 Outlook（outlook.com）",
+      "点右上角齿轮图标 → 查看所有 Outlook 设置",
+      "点「邮件」→「同步电子邮件」",
+      "确认 POP 和 IMAP 已启用",
+      "Outlook 直接用账号密码即可，填登录邮箱和密码就行",
+    ],
+    note: "如果用公司 365 账号，可能需要管理员开放 SMTP 权限",
+  },
+];
+
 const SMTP_PRESETS: Record<string, { host: string; port: number; secure_type: string }> = {
   Gmail: { host: "smtp.gmail.com", port: 465, secure_type: "SSL" },
   Outlook: { host: "smtp.office365.com", port: 587, secure_type: "STARTTLS" },
@@ -27,6 +88,7 @@ export default function SmtpConfigPage() {
   const [testing, setTesting] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [openGuide, setOpenGuide] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
@@ -228,6 +290,50 @@ export default function SmtpConfigPage() {
       <p className="text-xs text-gray-400 text-center mt-4">
         测试邮件会发送到你的账号注册邮箱，验证通过后才能正式发送
       </p>
+
+      {/* 配置说明 */}
+      <div className="mt-10">
+        <h2 className="text-base font-semibold text-gray-800 mb-3">📖 各邮箱配置教程</h2>
+        <div className="space-y-2">
+          {GUIDES.map((guide) => (
+            <div key={guide.name} className="bg-white border rounded-xl overflow-hidden">
+              <button
+                className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+                onClick={() => setOpenGuide(openGuide === guide.name ? null : guide.name)}
+              >
+                <span className="text-sm font-medium text-gray-800">{guide.name}</span>
+                <span className="text-gray-400 text-xs">{openGuide === guide.name ? "▲ 收起" : "▼ 查看步骤"}</span>
+              </button>
+
+              {openGuide === guide.name && (
+                <div className="border-t px-5 py-4">
+                  {guide.note && (
+                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                      {guide.note}
+                    </div>
+                  )}
+                  <ol className="space-y-2">
+                    {guide.steps.map((step, i) => (
+                      <li key={i} className="flex gap-3 text-sm text-gray-700">
+                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs flex items-center justify-center font-medium">
+                          {i + 1}
+                        </span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <button
+                    onClick={() => applyPreset(guide.name.split("（")[0].replace("企业邮箱", "企业微信邮箱"))}
+                    className="mt-4 text-xs text-blue-600 hover:underline"
+                  >
+                    套用此邮箱的 SMTP 配置 →
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </main>
   );
 }
