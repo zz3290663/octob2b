@@ -87,6 +87,17 @@ export default async function DashboardPage() {
         </Link>
 
         <Link
+          href="/dashboard/smtp"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">邮箱配置</p>
+            <p className="text-sm text-gray-500">配置 SMTP 发件信息，用自己的邮箱发送</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
+
+        <Link
           href="/change-password"
           className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
         >

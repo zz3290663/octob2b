@@ -246,6 +246,45 @@ export default function BulkEmailPage() {
   const doneCount = results.filter((r) => r.status === "done").length;
   const errorCount = results.filter((r) => r.status === "error").length;
 
+  // 发送状态
+  const [sending, setSending] = useState(false);
+  const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendResults, setSendResults] = useState<Record<number, "sent" | "failed">>({});
+
+  const handleSendAll = async () => {
+    const toSend = results.filter((r) => r.status === "done");
+    setSending(true);
+    setSendProgress({ current: 0, total: toSend.length });
+    setShowSendModal(false);
+    const newSendResults: Record<number, "sent" | "failed"> = {};
+
+    for (let i = 0; i < toSend.length; i++) {
+      const r = toSend[i];
+      try {
+        const res = await fetch("/api/email/send-one", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer_email: r.customer.email,
+            customer_company: r.customer.company || "",
+            subject: r.subject,
+            content: r.body,
+          }),
+        });
+        const data = await res.json();
+        newSendResults[i] = data.success ? "sent" : "failed";
+      } catch {
+        newSendResults[i] = "failed";
+      }
+      setSendResults({ ...newSendResults });
+      setSendProgress((p) => ({ ...p, current: i + 1 }));
+      // 每封间隔 30 秒（内部测试版）
+      if (i < toSend.length - 1) await new Promise((res) => setTimeout(res, 30000));
+    }
+    setSending(false);
+  };
+
   // ── Upload ─────────────────────────────────────────────────────────────────
   if (step === "upload") {
     return (
@@ -481,28 +520,43 @@ export default function BulkEmailPage() {
         </p>
       </div>
 
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={exportCSV}
-          className="flex-1 py-2.5 bg-white border rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
+      {/* 发送确认 modal */}
+      {showSendModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">确认发送</h3>
+            <p className="text-sm text-gray-600 mb-1">将发送 <span className="font-medium text-blue-600">{doneCount}</span> 封邮件</p>
+            <p className="text-sm text-gray-500 mb-4">每封间隔 30 秒，发送过程中请保持页面开启</p>
+            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+              ⚠️ 每天最多发送 50 封，已发送过的不会重复发
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowSendModal(false)} className="flex-1 py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50">取消</button>
+              <button onClick={handleSendAll} className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">确认发送</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3 mb-6">
+        <button onClick={exportCSV} className="py-2.5 px-4 bg-white border rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
           导出 CSV
         </button>
-        <button
-          onClick={exportTXT}
-          className="flex-1 py-2.5 bg-white border rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
+        <button onClick={exportTXT} className="py-2.5 px-4 bg-white border rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
           导出 TXT
         </button>
         <button
-          onClick={() => {
-            setStep("upload");
-            setResults([]);
-            setRawData([]);
-          }}
-          className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700"
+          onClick={() => { setStep("upload"); setResults([]); setRawData([]); }}
+          className="py-2.5 px-4 bg-white border rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           重新上传
+        </button>
+        <button
+          onClick={() => setShowSendModal(true)}
+          disabled={sending || doneCount === 0}
+          className="py-2.5 px-4 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 ml-auto"
+        >
+          {sending ? `发送中 ${sendProgress.current}/${sendProgress.total}...` : "发送邮件"}
         </button>
       </div>
 
@@ -523,6 +577,11 @@ export default function BulkEmailPage() {
                       : "bg-yellow-400 animate-pulse"
                   }`}
                 />
+                {sendResults[idx] && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${sendResults[idx] === "sent" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {sendResults[idx] === "sent" ? "已发送" : "发送失败"}
+                  </span>
+                )}
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">
                     {r.customer.company || r.customer.email}
