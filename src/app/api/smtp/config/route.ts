@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { encrypt, decrypt } from "@/lib/encryption";
+import { encrypt } from "@/lib/encryption";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -48,18 +48,3 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-export async function getDecryptedConfig(userId: string) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("smtp_configs")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  if (!data) return null;
-
-  return {
-    ...data,
-    smtp_password: decrypt(data.smtp_password_encrypted),
-  };
-}
