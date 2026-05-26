@@ -54,6 +54,20 @@ const GUIDES: { name: string; steps: string[]; note?: string }[] = [
     ],
   },
   {
+    name: "Hostinger 企业邮箱",
+    steps: [
+      "登录 Hostinger 后台（hpanel.hostinger.com）",
+      "左侧菜单点「Emails」→「Email Accounts」",
+      "找到你的邮箱账号，点「Manage」",
+      "页面里可以看到 SMTP 配置信息，一般如下：",
+      "SMTP 服务器：smtp.hostinger.com",
+      "端口：465（SSL）或 587（STARTTLS）",
+      "用户名：你的完整邮箱地址，如 you@yourcompany.com",
+      "密码：你在 Hostinger 创建该邮箱时设置的密码（就是邮箱登录密码，不需要额外生成授权码）",
+    ],
+    note: "💡 如果忘记密码，在 Hostinger 后台 Email Accounts 页面可以直接重置",
+  },
+  {
     name: "Outlook / 微软邮箱",
     steps: [
       "登录 Outlook（outlook.com）",
@@ -72,6 +86,7 @@ const SMTP_PRESETS: Record<string, { host: string; port: number; secure_type: st
   "163邮箱": { host: "smtp.163.com", port: 465, secure_type: "SSL" },
   "QQ邮箱": { host: "smtp.qq.com", port: 465, secure_type: "SSL" },
   "企业微信邮箱": { host: "smtp.exmail.qq.com", port: 465, secure_type: "SSL" },
+  "Hostinger": { host: "smtp.hostinger.com", port: 465, secure_type: "SSL" },
 };
 
 export default function SmtpConfigPage() {
