@@ -1,8 +1,53 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import Papa from "papaparse";
 import Link from "next/link";
+
+// 简易 CSV 解析（支持带引号的字段）
+function parseCSVText(text: string): { fields: string[]; data: Record<string, string>[] } {
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter(Boolean);
+  if (lines.length < 2) return { fields: [], data: [] };
+
+  const parseRow = (line: string): string[] => {
+    const result: string[] = [];
+    let cur = "";
+    let inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+        else inQuote = !inQuote;
+      } else if (ch === "," && !inQuote) {
+        result.push(cur.trim());
+        cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    result.push(cur.trim());
+    return result;
+  };
+
+  const fields = parseRow(lines[0]);
+  const data = lines.slice(1).map((line) => {
+    const vals = parseRow(line);
+    const row: Record<string, string> = {};
+    fields.forEach((f, i) => { row[f] = vals[i] ?? ""; });
+    return row;
+  });
+  return { fields, data };
+}
+
+// CSV 导出
+function toCSV(rows: Record<string, string>[]): string {
+  if (rows.length === 0) return "";
+  const headers = Object.keys(rows[0]);
+  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  return [
+    headers.map(escape).join(","),
+    ...rows.map((r) => headers.map((h) => escape(r[h] ?? "")).join(",")),
+  ].join("\n");
+}
 
 type Step = "upload" | "configure" | "generating" | "results";
 
@@ -85,56 +130,28 @@ export default function BulkEmailPage() {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parseCSV = useCallback((file: File) => {
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: ({ data, meta }) => {
-        const rows = data as Record<string, string>[];
-        const cols = (meta.fields || []) as string[];
-        setRawData(rows);
-        setColumns(cols);
-        const mapping: Record<string, string> = {};
-        for (const col of cols) {
-          const f = autoDetect(col);
-          if (f && !mapping[f]) mapping[f] = col;
-        }
-        setFieldMapping(mapping);
-        setStep("configure");
-      },
-    });
-  }, []);
-
-  const parseExcel = useCallback(async (file: File) => {
-    const XLSX = await import("xlsx");
+  const handleFile = useCallback((file: File) => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext !== "csv") {
+      alert("请上传 CSV 文件（Excel 请另存为 CSV 后上传）");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
-      const wb = XLSX.read(e.target?.result, { type: "binary" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: "" });
-      const cols = rows.length > 0 ? Object.keys(rows[0]) : [];
-      setRawData(rows);
-      setColumns(cols);
+      const text = e.target?.result as string;
+      const { fields, data } = parseCSVText(text);
+      setRawData(data);
+      setColumns(fields);
       const mapping: Record<string, string> = {};
-      for (const col of cols) {
+      for (const col of fields) {
         const f = autoDetect(col);
         if (f && !mapping[f]) mapping[f] = col;
       }
       setFieldMapping(mapping);
       setStep("configure");
     };
-    reader.readAsBinaryString(file);
+    reader.readAsText(file, "UTF-8");
   }, []);
-
-  const handleFile = useCallback(
-    (file: File) => {
-      const ext = file.name.split(".").pop()?.toLowerCase();
-      if (ext === "csv") parseCSV(file);
-      else if (ext === "xlsx" || ext === "xls") parseExcel(file);
-      else alert("请上传 CSV 或 Excel 文件");
-    },
-    [parseCSV, parseExcel]
-  );
 
   const mapRow = (row: Record<string, string>): Customer => {
     const c: Record<string, string> = {};
@@ -211,7 +228,7 @@ export default function BulkEmailPage() {
         主题: r.subject,
         内容: r.body,
       }));
-    downloadFile("bulk-emails.csv", Papa.unparse(rows), "text/csv;charset=utf-8;");
+    downloadFile("bulk-emails.csv", toCSV(rows), "text/csv;charset=utf-8;");
   };
 
   const exportTXT = () => {
@@ -264,11 +281,11 @@ export default function BulkEmailPage() {
         >
           <div className="text-5xl mb-4">📂</div>
           <p className="text-gray-700 font-medium">拖拽文件到这里，或点击选择</p>
-          <p className="text-sm text-gray-400 mt-2">支持 CSV、Excel (.xlsx / .xls)</p>
+          <p className="text-sm text-gray-400 mt-2">支持 CSV 格式（Excel 请另存为 CSV 后上传）</p>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,.xlsx,.xls"
+            accept=".csv"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
