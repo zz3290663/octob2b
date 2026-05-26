@@ -308,6 +308,16 @@ export default function BulkEmailPage() {
           <p className="text-xs text-gray-400 mt-4">
             列名中英文均可自动识别 · 字段越完整，邮件越个性化
           </p>
+          <button
+            onClick={() => {
+              const header = "email,company,name,country,product,position,last_contact_date,note";
+              const example = "john@acme.com,Acme Corp,John Smith,USA,Solar Panel,Purchasing Manager,2024-01-15,曾询价过100W产品";
+              downloadFile("客户列表模板.csv", `${header}\n${example}`, "text/csv;charset=utf-8;");
+            }}
+            className="mt-4 w-full py-2.5 border border-blue-200 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+          >
+            下载填写模板 (.csv)
+          </button>
         </div>
       </main>
     );
