@@ -34,7 +34,10 @@ export default function Header() {
 
         <div className="flex items-center gap-6">
           <Link href="/tools/cold-email" className="text-sm text-gray-600 hover:text-blue-600">
-            工具
+            开发信
+          </Link>
+          <Link href="/tools/bulk-email" className="text-sm text-gray-600 hover:text-blue-600">
+            批量群发
           </Link>
           <Link href="/#pricing" className="text-sm text-gray-600 hover:text-blue-600">
             价格

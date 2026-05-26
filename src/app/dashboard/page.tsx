@@ -76,6 +76,17 @@ export default async function DashboardPage() {
         </Link>
 
         <Link
+          href="/tools/bulk-email"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">批量邮件生成</p>
+            <p className="text-sm text-gray-500">上传客户表格，批量生成个性化邮件</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
+
+        <Link
           href="/change-password"
           className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
         >
