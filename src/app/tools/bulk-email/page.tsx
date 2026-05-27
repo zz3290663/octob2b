@@ -251,6 +251,20 @@ export default function BulkEmailPage() {
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendResults, setSendResults] = useState<Record<number, "sent" | "failed">>({});
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ subject: "", body: "" });
+
+  const startEdit = (r: EmailResult, idx: number) => {
+    setEditingIdx(idx);
+    setEditForm({ subject: r.subject, body: r.body });
+  };
+
+  const saveEdit = (idx: number) => {
+    setResults((prev) =>
+      prev.map((r, i) => i === idx ? { ...r, subject: editForm.subject, body: editForm.body } : r)
+    );
+    setEditingIdx(null);
+  };
 
   const handleSendAll = async () => {
     const toSend = results.filter((r) => r.status === "done");
@@ -603,21 +617,69 @@ export default function BulkEmailPage() {
 
             {expandedIdx === idx && r.status === "done" && (
               <div className="border-t px-5 py-4">
-                <div className="flex justify-between items-start mb-3 gap-3">
-                  <p className="text-xs text-gray-500">
-                    <span className="font-medium text-gray-700">Subject: </span>
-                    {r.subject}
-                  </p>
-                  <button
-                    onClick={() => copyEmail(r, idx)}
-                    className="flex-shrink-0 text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    {copiedIdx === idx ? "已复制 ✓" : "复制"}
-                  </button>
-                </div>
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
-                  {r.body}
-                </pre>
+                {editingIdx === idx ? (
+                  // ── 编辑模式 ──
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Subject</label>
+                      <input
+                        value={editForm.subject}
+                        onChange={(e) => setEditForm((f) => ({ ...f, subject: e.target.value }))}
+                        className="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">正文</label>
+                      <textarea
+                        value={editForm.body}
+                        onChange={(e) => setEditForm((f) => ({ ...f, body: e.target.value }))}
+                        rows={10}
+                        className="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none resize-y font-sans"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => setEditingIdx(null)}
+                        className="text-xs px-3 py-1.5 border rounded-lg text-gray-600 hover:bg-gray-50"
+                      >
+                        取消
+                      </button>
+                      <button
+                        onClick={() => saveEdit(idx)}
+                        className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        保存
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // ── 查看模式 ──
+                  <>
+                    <div className="flex justify-between items-start mb-3 gap-3">
+                      <p className="text-xs text-gray-500">
+                        <span className="font-medium text-gray-700">Subject: </span>
+                        {r.subject}
+                      </p>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => startEdit(r, idx)}
+                          className="text-xs px-3 py-1.5 border rounded-lg text-gray-600 hover:bg-gray-50"
+                        >
+                          编辑
+                        </button>
+                        <button
+                          onClick={() => copyEmail(r, idx)}
+                          className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          {copiedIdx === idx ? "已复制 ✓" : "复制"}
+                        </button>
+                      </div>
+                    </div>
+                    <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+                      {r.body}
+                    </pre>
+                  </>
+                )}
               </div>
             )}
 
