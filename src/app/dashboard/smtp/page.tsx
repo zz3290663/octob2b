@@ -285,15 +285,51 @@ export default function SmtpConfigPage() {
             邮件签名
             <span className="text-gray-400 font-normal ml-1">（可选，自动附在每封邮件末尾）</span>
           </label>
+
+          {/* 预设模板 */}
+          <div className="flex flex-wrap gap-2 mb-2">
+            {[
+              {
+                label: "简洁版",
+                template: (name: string, email: string) =>
+                  `Best regards,\n${name || "Your Name"}\n[Title] | [Company]\nTel: +86-xxx-xxxx-xxxx\n${email || "your@email.com"}`,
+              },
+              {
+                label: "标准外贸版",
+                template: (name: string, email: string) =>
+                  `Best regards,\n${name || "Your Name"}\nExport Sales Manager\n[Company Name] | China\nTel/WhatsApp: +86-xxx-xxxx-xxxx\n${email || "your@email.com"}\nwww.[yourcompany].com`,
+              },
+              {
+                label: "中英双语版",
+                template: (name: string, email: string) =>
+                  `Best regards / 顺颂商祺,\n${name || "Your Name"} / [中文姓名]\n[Title / 职位] | [Company / 公司]\nTel/WhatsApp: +86-xxx-xxxx-xxxx\n${email || "your@email.com"}\nwww.[yourcompany].com`,
+              },
+              {
+                label: "详细版",
+                template: (name: string, email: string) =>
+                  `Best regards,\n${name || "Your Name"}\n[Title]\n\n[Company Name]\nAdd: [Address, City, China]\nTel: +86-xxx-xxxx-xxxx\nWhatsApp: +86-xxx-xxxx-xxxx\nSkype: [skype_id]\n${email || "your@email.com"}\nwww.[yourcompany].com`,
+              },
+            ].map(({ label, template }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => set("signature", template(form.sender_name, form.sender_email))}
+                className="px-3 py-1 text-xs border rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-colors"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <textarea
             value={form.signature}
             onChange={e => set("signature", e.target.value)}
-            placeholder={`Best regards,\n张伟 (Wei Zhang)\nExport Sales Manager\nABC Trading Co., Ltd.\nTel: +86-138-xxxx-xxxx\nwww.yourcompany.com`}
-            rows={5}
-            className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none font-mono"
+            placeholder={`点上方模板快速填入，或直接输入...\n\nBest regards,\n张伟 (Wei Zhang)\nExport Sales Manager | ABC Trading Co., Ltd.\nTel: +86-138-xxxx-xxxx\nyour@email.com`}
+            rows={6}
+            className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-y font-mono"
           />
           <p className="text-xs text-gray-400 mt-1">
-            发送时自动在邮件正文后加上「--」分隔线和签名
+            点模板快速填入后，把 [ ] 里的内容替换成你自己的信息 · 发送时自动附在正文末尾
           </p>
         </div>
       </div>
