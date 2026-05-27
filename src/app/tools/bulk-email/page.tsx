@@ -458,6 +458,9 @@ export default function BulkEmailPage() {
             补充要求{" "}
             <span className="text-gray-400 font-normal">（可选）</span>
           </p>
+          <p className="text-xs text-gray-400 mb-2">
+            💡 想在邮件里加产品链接？直接在这里说明，例如：「邮件末尾加上产品目录链接 https://yourwebsite.com/catalog」，AI 会把链接写进邮件正文，收件人点击即可查看。
+          </p>
           <textarea
             value={extra}
             onChange={(e) => setExtra(e.target.value)}
