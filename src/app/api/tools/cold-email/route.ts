@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
     await supabase.from("usage").insert({
       user_id: user.id,
       tool: "cold-email",
-      input: { type, style, product, market, advantages, priceRange, moq, context },
+      input: { templateKey, style, product, market, advantages, priceRange, moq, context },
       result: email,
       ip_address: ip,
     });
