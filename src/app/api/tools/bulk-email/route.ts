@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 const SCENARIO_DESC: Record<string, string> = {
+  cold_classic: "Classic first-contact cold email — grab attention with an industry insight or pain point, introduce the product with 1-2 strong differentiators, end with a low-friction CTA. Direct and concise.",
+  company_intro: "Professional company introduction — build credibility (scale, certs, experience), describe key products, highlight differentiators, close with an invitation to connect or request a catalog.",
   reactivate: "Old customer reactivation — reconnect with an existing customer you haven't spoken with in a while. Reference the past relationship warmly.",
   new_product: "New product introduction — introduce a new product to an existing customer. Highlight what's new and why it suits them.",
   quote_followup: "Quote follow-up — follow up after sending a quotation that received no reply. Be polite but create gentle urgency.",

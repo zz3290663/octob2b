@@ -73,11 +73,13 @@ interface EmailResult {
 }
 
 const SCENARIOS = [
-  { value: "reactivate", label: "老客户唤醒", desc: "重新联系长期未回复的老客户" },
-  { value: "new_product", label: "新品推荐", desc: "向老客户介绍新产品" },
-  { value: "quote_followup", label: "报价后跟进", desc: "发完报价后没有收到回复" },
-  { value: "lost_deal", label: "未成交客户二次跟进", desc: "重新接触之前没有成交的客户" },
-  { value: "holiday", label: "节日问候", desc: "节日维护客户关系" },
+  { value: "cold_classic",   label: "冷开发信经典款", desc: "首次联系陌生客户，直击痛点" },
+  { value: "company_intro",  label: "专业公司介绍款", desc: "展示实力，建立专业供应商形象" },
+  { value: "reactivate",     label: "老客户唤醒",     desc: "重新联系长期未回复的老客户" },
+  { value: "new_product",    label: "新品推荐",       desc: "向老客户介绍新产品" },
+  { value: "quote_followup", label: "报价后跟进",     desc: "发完报价后没有收到回复" },
+  { value: "lost_deal",      label: "未成交二次跟进", desc: "重新接触之前没有成交的客户" },
+  { value: "holiday",        label: "节日问候",       desc: "节日维护客户关系" },
 ];
 
 const FIELD_LABELS: Record<string, string> = {
@@ -816,6 +818,25 @@ export default function BulkEmailPage() {
                           className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
                           {copiedIdx === idx ? "已复制 ✓" : "复制"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            const name = prompt("给这个模板起个名字：");
+                            if (!name?.trim()) return;
+                            fetch("/api/templates", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                name: name.trim(),
+                                subject: r.subject,
+                                body: r.body,
+                                scenario: SCENARIOS.find((s) => s.value === scenario)?.label,
+                              }),
+                            }).then(() => alert("模板已保存 ✓"));
+                          }}
+                          className="text-xs px-3 py-1.5 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"
+                        >
+                          存模板
                         </button>
                       </div>
                     </div>

@@ -15,9 +15,25 @@ const ratelimit = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDI
     })
   : null;
 
+// ── 系统模板写作风格提示 ──────────────────────────────────────────────────────
+const TEMPLATE_HINTS: Record<string, string> = {
+  cold_classic:
+    "Classic first-contact cold email. Grab attention fast with an industry insight or specific pain point. Introduce your product with 1-2 strong differentiators. End with a low-friction CTA. Be direct, concise, no fluff.",
+  company_intro:
+    "Professional company introduction. Build credibility first (founding year, scale, certifications). Describe key products and capabilities. Highlight what makes you different from typical suppliers. Close with an invitation to connect or request a catalog/samples.",
+  quote_followup:
+    "Post-quote follow-up email. Reference the previous quote or discussion naturally. Address potential hesitation by adding value, clarification, or flexibility. Create gentle urgency without being pushy. Make the next step extremely easy.",
+  reactivate:
+    "Dormant customer reactivation. Open warmly and acknowledge the time since last contact. Share something genuinely new — a new product, better pricing, new certification, or market insight. Keep the CTA soft and easy to respond to. Feel like a real person, not a template.",
+  new_product:
+    "New product introduction to an existing contact. Hook immediately with the problem the new product solves. List 2-3 features specifically relevant to their industry or past interest. Offer a sample, trial, or quick call to see it.",
+  holiday:
+    "Warm seasonal or holiday greeting. Lead with genuine warmth appropriate to the holiday. Keep business content minimal — this is about the relationship, not the sale. End with a friendly, no-pressure close. Tone: human and warm, never salesy.",
+};
+
 // ── Prompt 模板 ───────────────────────────────────────────────────────────────
 function buildPrompt(input: {
-  type: string;
+  templateKey?: string;
   style: string;
   product: string;
   market: string;
@@ -27,34 +43,36 @@ function buildPrompt(input: {
   context?: string;
 }) {
   const styleMap: Record<string, string> = {
-    formal: "商务正式，适合传统行业大客户",
-    casual: "轻松友好，适合中小买家",
-    direct: "开门见山，适合时间紧的采购",
+    formal: "professional and formal",
+    casual: "friendly and approachable",
+    direct: "direct and to-the-point",
   };
+
+  const templateHint = input.templateKey ? TEMPLATE_HINTS[input.templateKey] : null;
 
   return `You are a professional B2B cold email writer for international trade. Generate a professional sales email based on the following information.
 
-【User Input】
-Email Type: ${input.type}
-Writing Style: ${input.style} (${styleMap[input.style]})
+【Email Style】
+${templateHint ?? "Professional cold outreach email."}
+Tone: ${styleMap[input.style] ?? "professional"}
+
+【Sender Information】
 Product: ${input.product}
 Target Market: ${input.market}
-Company Advantages: ${input.advantages}
-Price Range: ${input.priceRange}
-MOQ: ${input.moq}
-${input.context ? `Context: ${input.context}` : ""}
+${input.advantages ? `Company Advantages: ${input.advantages}` : ""}
+${input.priceRange ? `Price Range: ${input.priceRange}` : ""}
+${input.moq ? `MOQ: ${input.moq}` : ""}
+${input.context ? `Context / Background: ${input.context}` : ""}
 
 【Requirements】
 1. Professional, natural English that reads like a native speaker wrote it
 2. 150-200 words, no longer
-3. Structure: Hook opening + Value proposition + Clear CTA
-4. Do NOT start with "I'm writing to..." or "I hope this email finds you well"
-5. Match the tone strictly to the specified style
-6. End with a specific, easy-to-act-on call to action
+3. Do NOT start with "I'm writing to..." or "I hope this email finds you well"
+4. Follow the Email Style instructions above strictly
+5. End with a specific, easy-to-act-on call to action
 
 【Compliance】
 - Refuse to generate content involving counterfeit goods, sanctioned countries, or weapons
-- If input contains such content, return a refusal notice instead
 
 Generate the email now:`;
 }
@@ -115,14 +133,14 @@ export async function POST(req: NextRequest) {
 
   // 4. 解析参数
   const body = await req.json();
-  const { type, style, product, market, advantages, priceRange, moq, context } = body;
+  const { templateKey, style, product, market, advantages, priceRange, moq, context } = body;
 
-  if (!type || !product || !market || !style) {
+  if (!product || !market) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
   }
 
   // 5. 调用 DeepSeek
-  const prompt = buildPrompt({ type, style, product, market, advantages, priceRange, moq, context });
+  const prompt = buildPrompt({ templateKey, style: style || "formal", product, market, advantages, priceRange, moq, context });
   const start = Date.now();
 
   try {
@@ -169,7 +187,7 @@ export async function POST(req: NextRequest) {
       company: null,
       subject: null,
       body: email,
-      meta: { type, style, product, market, advantages },
+      meta: { templateKey, style, product, market, advantages },
     });
 
     return NextResponse.json({
