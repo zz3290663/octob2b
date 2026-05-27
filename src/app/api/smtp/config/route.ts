@@ -9,7 +9,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from("smtp_configs")
-    .select("sender_name, sender_email, smtp_host, smtp_port, smtp_username, secure_type, is_verified")
+    .select("sender_name, sender_email, smtp_host, smtp_port, smtp_username, secure_type, is_verified, signature")
     .eq("user_id", user.id)
     .single();
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
   const body = await req.json();
-  const { sender_name, sender_email, smtp_host, smtp_port, smtp_username, smtp_password, secure_type } = body;
+  const { sender_name, sender_email, smtp_host, smtp_port, smtp_username, smtp_password, secure_type, signature } = body;
 
   if (!sender_name || !sender_email || !smtp_host || !smtp_port || !smtp_username || !smtp_password) {
     return NextResponse.json({ error: "请填写所有必填字段" }, { status: 400 });
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     smtp_username,
     smtp_password_encrypted,
     secure_type: secure_type || "SSL",
+    signature: signature || null,
     is_verified: false,
     updated_at: new Date().toISOString(),
   }, { onConflict: "user_id" });

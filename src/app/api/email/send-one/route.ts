@@ -65,9 +65,13 @@ export async function POST(req: NextRequest) {
 
   if (insertError) return NextResponse.json({ error: "数据库写入失败" }, { status: 500 });
 
+  // 拼接签名
+  const signature = cfg.signature?.trim();
+  const finalContent = signature ? `${content}\n\n--\n${signature}` : content;
+
   // 发送邮件
   try {
-    await sendEmail(smtpConfig, customer_email, subject, content);
+    await sendEmail(smtpConfig, customer_email, subject, finalContent);
 
     await supabase
       .from("email_sends")

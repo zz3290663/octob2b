@@ -98,6 +98,7 @@ export default function SmtpConfigPage() {
     smtp_username: "",
     smtp_password: "",
     secure_type: "SSL",
+    signature: "",
   });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -120,6 +121,7 @@ export default function SmtpConfigPage() {
             smtp_port: String(config.smtp_port),
             smtp_username: config.smtp_username,
             secure_type: config.secure_type,
+            signature: config.signature || "",
           }));
           setIsVerified(config.is_verified);
         }
@@ -276,6 +278,23 @@ export default function SmtpConfigPage() {
             placeholder="Gmail 请使用「应用专用密码」"
             className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            邮件签名
+            <span className="text-gray-400 font-normal ml-1">（可选，自动附在每封邮件末尾）</span>
+          </label>
+          <textarea
+            value={form.signature}
+            onChange={e => set("signature", e.target.value)}
+            placeholder={`Best regards,\n张伟 (Wei Zhang)\nExport Sales Manager\nABC Trading Co., Ltd.\nTel: +86-138-xxxx-xxxx\nwww.yourcompany.com`}
+            rows={5}
+            className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none font-mono"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            发送时自动在邮件正文后加上「--」分隔线和签名
+          </p>
         </div>
       </div>
 
