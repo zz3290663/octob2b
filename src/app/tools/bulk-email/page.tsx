@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 
 // 简易 CSV 解析（支持带引号的字段）
@@ -254,6 +254,38 @@ export default function BulkEmailPage() {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ subject: "", body: "" });
 
+  // 定时发送状态
+  const [sendMode, setSendMode] = useState<"now" | "scheduled">("now");
+  const [scheduledTime, setScheduledTime] = useState(() => {
+    // 默认：1小时后取整到5分钟
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5, 0, 0);
+    return d.toISOString().slice(0, 16);
+  });
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 组件卸载时清除定时器
+  useEffect(() => {
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+  }, []);
+
+  function formatCountdown(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    const mm = m.toString().padStart(2, "0");
+    const ss = s.toString().padStart(2, "0");
+    if (h > 0) return `${h}小时${mm}分${ss}秒`;
+    if (m > 0) return `${m}分${ss}秒`;
+    return `${s} 秒`;
+  }
+
+  const cancelScheduled = () => {
+    if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
+    setCountdown(null);
+  };
+
   const startEdit = (r: EmailResult, idx: number) => {
     setEditingIdx(idx);
     setEditForm({ subject: r.subject, body: r.body });
@@ -264,6 +296,34 @@ export default function BulkEmailPage() {
       prev.map((r, i) => i === idx ? { ...r, subject: editForm.subject, body: editForm.body } : r)
     );
     setEditingIdx(null);
+  };
+
+  const handleConfirmSend = () => {
+    setShowSendModal(false);
+    if (sendMode === "now") {
+      handleSendAll();
+      return;
+    }
+    // 定时发送
+    const scheduledMs = new Date(scheduledTime).getTime();
+    const secondsUntil = Math.floor((scheduledMs - Date.now()) / 1000);
+    if (secondsUntil <= 0) {
+      handleSendAll();
+      return;
+    }
+    setCountdown(secondsUntil);
+    const ref = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(ref);
+          countdownRef.current = null;
+          handleSendAll();
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    countdownRef.current = ref;
   };
 
   const handleSendAll = async () => {
@@ -541,16 +601,93 @@ export default function BulkEmailPage() {
       {showSendModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">确认发送</h3>
-            <p className="text-sm text-gray-600 mb-1">将发送 <span className="font-medium text-blue-600">{doneCount}</span> 封邮件</p>
-            <p className="text-sm text-gray-500 mb-4">每封间隔 30 秒，发送过程中请保持页面开启</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">发送设置</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              共 <span className="font-medium text-blue-600">{doneCount}</span> 封邮件，每封间隔 30 秒
+            </p>
+
+            {/* 发送时间选择 */}
+            <div className="space-y-2 mb-4">
+              <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${sendMode === "now" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}>
+                <input
+                  type="radio"
+                  name="sendMode"
+                  checked={sendMode === "now"}
+                  onChange={() => setSendMode("now")}
+                  className="accent-blue-600"
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">立即发送</p>
+                  <p className="text-xs text-gray-500">确认后马上开始，保持页面开启</p>
+                </div>
+              </label>
+              <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${sendMode === "scheduled" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}>
+                <input
+                  type="radio"
+                  name="sendMode"
+                  checked={sendMode === "scheduled"}
+                  onChange={() => setSendMode("scheduled")}
+                  className="accent-blue-600"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-800">定时发送</p>
+                  <p className="text-xs text-gray-500">页面倒计时到时间后自动发送</p>
+                </div>
+              </label>
+            </div>
+
+            {/* 定时时间选择器 */}
+            {sendMode === "scheduled" && (
+              <div className="mb-4">
+                <label className="text-xs font-medium text-gray-600 block mb-1">选择发送时间</label>
+                <input
+                  type="datetime-local"
+                  value={scheduledTime}
+                  min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+                {scheduledTime && new Date(scheduledTime).getTime() <= Date.now() && (
+                  <p className="text-xs text-red-500 mt-1">⚠️ 请选择未来的时间</p>
+                )}
+              </div>
+            )}
+
             <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
-              ⚠️ 每天最多发送 50 封，已发送过的不会重复发
+              ⚠️ 每天最多发送 50 封 · 发送过程中请保持页面开启
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowSendModal(false)} className="flex-1 py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50">取消</button>
-              <button onClick={handleSendAll} className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">确认发送</button>
+              <button
+                onClick={handleConfirmSend}
+                disabled={sendMode === "scheduled" && (!scheduledTime || new Date(scheduledTime).getTime() <= Date.now())}
+                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                {sendMode === "now" ? "确认发送" : "设置定时"}
+              </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 倒计时横幅 */}
+      {countdown !== null && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⏰</span>
+            <div>
+              <p className="text-sm font-semibold text-blue-800">定时发送倒计时</p>
+              <p className="text-xs text-blue-600 mt-0.5">请保持页面开启，到时间自动开始发送</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <p className="text-2xl font-bold text-blue-700 tabular-nums">{formatCountdown(countdown)}</p>
+            <button
+              onClick={cancelScheduled}
+              className="text-xs px-3 py-1.5 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-100"
+            >
+              取消定时
+            </button>
           </div>
         </div>
       )}
@@ -570,10 +707,14 @@ export default function BulkEmailPage() {
         </button>
         <button
           onClick={() => setShowSendModal(true)}
-          disabled={sending || doneCount === 0}
+          disabled={sending || doneCount === 0 || countdown !== null}
           className="py-2.5 px-4 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 ml-auto"
         >
-          {sending ? `发送中 ${sendProgress.current}/${sendProgress.total}...` : "发送邮件"}
+          {sending
+            ? `发送中 ${sendProgress.current}/${sendProgress.total}...`
+            : countdown !== null
+            ? "定时中..."
+            : "发送邮件"}
         </button>
       </div>
 
