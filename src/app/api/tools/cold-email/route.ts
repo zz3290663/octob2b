@@ -162,6 +162,16 @@ export async function POST(req: NextRequest) {
       ip_address: ip,
     });
 
+    // 7. 存入历史记录表
+    await supabase.from("email_history").insert({
+      user_id: user.id,
+      type: "cold_email",
+      company: null,
+      subject: null,
+      body: email,
+      meta: { type, style, product, market, advantages },
+    });
+
     return NextResponse.json({
       email,
       isPremium: creditCheck.isPremium,

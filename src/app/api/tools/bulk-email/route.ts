@@ -96,6 +96,16 @@ export async function POST(req: NextRequest) {
     const subject = subjectMatch?.[1]?.trim() || "Following up";
     const body = bodyMatch?.[1]?.trim() || content.trim();
 
+    // 存入历史记录表
+    await supabase.from("email_history").insert({
+      user_id: user.id,
+      type: "bulk_email",
+      company: customer.company || null,
+      subject,
+      body,
+      meta: { scenario, customer_email: customer.email },
+    });
+
     return NextResponse.json({ subject, body });
   } catch (err) {
     console.error("bulk-email error:", err);

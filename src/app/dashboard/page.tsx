@@ -65,6 +65,17 @@ export default async function DashboardPage() {
       {/* 快捷链接 */}
       <div className="mt-8 space-y-3">
         <Link
+          href="/dashboard/history"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">历史记录</p>
+            <p className="text-sm text-gray-500">查看之前生成的所有邮件</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
+
+        <Link
           href="/tools/cold-email"
           className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
         >
