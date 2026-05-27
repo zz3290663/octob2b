@@ -87,6 +87,17 @@ export default async function DashboardPage() {
         </Link>
 
         <Link
+          href="/tools/client-radar"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">客户雷达</p>
+            <p className="text-sm text-gray-500">输入客户网址，10秒生成中文客户画像</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
+
+        <Link
           href="/dashboard/smtp"
           className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
         >
