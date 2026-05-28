@@ -22,10 +22,10 @@ export default function LoginPage() {
 
     if (error) {
       setError("邮箱或密码错误，请重试");
+      setLoading(false);
     } else {
-      router.push("/tools/cold-email");
+      window.location.href = "/tools/cold-email";
     }
-    setLoading(false);
   };
 
   return (
