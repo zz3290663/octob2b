@@ -1,18 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-
-function extractText(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
-    .replace(/<footer[\s\S]*?<\/footer>/gi, "")
-    .replace(/<header[\s\S]*?<\/header>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&nbsp;/g, " ").replace(/&quot;/g, '"').replace(/&#\d+;/g, "")
-    .replace(/\s+/g, " ").trim().slice(0, 4000);
-}
+import { fetchWebsiteContent } from "@/lib/scraper";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -24,30 +12,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
   }
 
-  // 标准化 URL
-  let targetUrl = url.trim();
-  if (!/^https?:\/\//i.test(targetUrl)) targetUrl = "https://" + targetUrl;
-
-  // 抓取网站内容
-  let content = "";
+  // 抓取网站内容（含重试和 URL 变体）
+  let content: string;
+  let targetUrl: string;
   try {
-    const res = await fetch(targetUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-      },
-      signal: AbortSignal.timeout(12000),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    content = extractText(await res.text());
+    const result = await fetchWebsiteContent(url);
+    content = result.content;
+    targetUrl = result.url;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "未知错误";
-    return NextResponse.json({ error: `无法访问该网站：${msg}` }, { status: 400 });
-  }
-
-  if (content.length < 100) {
-    return NextResponse.json({ error: "网站内容过少，可能是纯图片网站或需要登录" }, { status: 400 });
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 
   const styleMap: Record<string, string> = {
