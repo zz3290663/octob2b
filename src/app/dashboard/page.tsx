@@ -120,6 +120,17 @@ export default async function DashboardPage() {
         </Link>
 
         <Link
+          href="/tools/smart-email"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">智能开发信</p>
+            <p className="text-sm text-gray-500">上传网址表格，AI 分析客户再批量写信发送</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
+
+        <Link
           href="/dashboard/smtp"
           className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
         >

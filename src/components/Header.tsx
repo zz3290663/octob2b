@@ -42,6 +42,9 @@ export default function Header() {
           <Link href="/tools/client-radar" className="text-sm text-gray-600 hover:text-blue-600">
             客户雷达
           </Link>
+          <Link href="/tools/smart-email" className="text-sm text-gray-600 hover:text-blue-600">
+            智能开发信
+          </Link>
           <Link href="/#pricing" className="text-sm text-gray-600 hover:text-blue-600">
             价格
           </Link>
