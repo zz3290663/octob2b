@@ -12,6 +12,10 @@ const SYSTEM_TEMPLATES = [
   { key: "reactivate",     icon: "🔄", label: "老客户唤醒款",   desc: "重新联系沉睡客户，重燃合作兴趣" },
   { key: "new_product",    icon: "🆕", label: "新品推荐款",     desc: "向老客户介绍新产品，激发采购意向" },
   { key: "holiday",        icon: "🎉", label: "节日问候款",     desc: "节日维系关系，自然不生硬" },
+  { key: "order_push",     icon: "🛒", label: "老客户催单款",   desc: "催促老客户复购，自然不尴尬" },
+  { key: "visit_request",  icon: "✈️", label: "上门拜访预约款", desc: "预约登门拜访，提高见面成功率" },
+  { key: "expo_invite",    icon: "🏛️", label: "展会邀约款",     desc: "邀请客户参观展位，制造线下接触机会" },
+  { key: "meeting_invite", icon: "💻", label: "线上会议邀约款", desc: "预约视频会议，快速推进合作谈判" },
 ];
 
 const STYLES = [
@@ -355,8 +359,8 @@ export default function ColdEmailPage() {
             </div>
           </div>
 
-          {/* 补充背景（报价跟进/老客户/新品/节日适用） */}
-          {["quote_followup", "reactivate", "new_product", "holiday"].includes(selectedTemplate) && (
+          {/* 补充背景（部分场景适用） */}
+          {["quote_followup", "reactivate", "new_product", "holiday", "order_push", "visit_request", "expo_invite", "meeting_invite"].includes(selectedTemplate) && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 补充背景 <span className="text-gray-400 font-normal">（可选）</span>
@@ -365,9 +369,13 @@ export default function ColdEmailPage() {
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
                 placeholder={
-                  selectedTemplate === "quote_followup" ? "如：2周前发了报价单，未收到反馈"
-                  : selectedTemplate === "reactivate" ? "如：上次合作是2年前，客户买过100套产品"
-                  : selectedTemplate === "new_product" ? "如：客户以前买过A款，新推出B款更省电"
+                  selectedTemplate === "quote_followup"  ? "如：2周前发了报价单，未收到反馈"
+                  : selectedTemplate === "reactivate"    ? "如：上次合作是2年前，客户买过100套产品"
+                  : selectedTemplate === "new_product"   ? "如：客户以前买过A款，新推出B款更省电"
+                  : selectedTemplate === "order_push"    ? "如：上次订单是3个月前，客户通常每季度复购"
+                  : selectedTemplate === "visit_request" ? "如：下月初去德国出差，希望顺道登门拜访"
+                  : selectedTemplate === "expo_invite"   ? "如：2024广交会，10月15-19日，A馆3楼B21展位"
+                  : selectedTemplate === "meeting_invite"? "如：希望介绍新款产品，讨论年度采购计划，30分钟"
                   : "如：即将到来的圣诞节"
                 }
                 rows={2}

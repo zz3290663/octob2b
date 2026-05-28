@@ -29,6 +29,14 @@ const TEMPLATE_HINTS: Record<string, string> = {
     "New product introduction to an existing contact. Hook immediately with the problem the new product solves. List 2-3 features specifically relevant to their industry or past interest. Offer a sample, trial, or quick call to see it.",
   holiday:
     "Warm seasonal or holiday greeting. Lead with genuine warmth appropriate to the holiday. Keep business content minimal — this is about the relationship, not the sale. End with a friendly, no-pressure close. Tone: human and warm, never salesy.",
+  order_push:
+    "Existing customer order nudge. This customer has bought from you before — open by referencing the relationship warmly. Naturally bring up reorder timing or seasonal demand cycles. Offer something concrete (updated pricing, priority production slot, or a small incentive). Keep it confident and friendly, never desperate.",
+  visit_request:
+    "In-person visit request. Politely ask for permission to visit their office or facility. Clearly explain the value of meeting in person — new samples to show, deeper discussion of their needs, or relationship building. Propose a flexible time window. Make it extremely easy for them to say yes.",
+  expo_invite:
+    "Trade show booth invitation. Invite the contact to visit your booth at an upcoming exhibition. Mention the show name, dates, and booth number prominently in the email. Highlight what they will see: new products, live demonstrations, exclusive show pricing. Create light urgency around the event date without pressure.",
+  meeting_invite:
+    "Online meeting invitation. Propose a short 15-30 minute video call. State the agenda clearly and upfront so they know exactly what to expect. Suggest 2-3 specific time slot options and offer flexibility to reschedule. Lead with the benefit they will get from the call, not the benefit to you.",
 };
 
 // ── Prompt 模板 ───────────────────────────────────────────────────────────────
