@@ -32,6 +32,8 @@ const URL_ALIASES = ["url", "website", "web", "site", "网址", "网站"];
 const EMAIL_ALIASES = ["email", "e-mail", "mail", "邮箱", "电子邮件"];
 const NAME_ALIASES = ["name", "contact", "contact name", "姓名", "联系人"];
 const COMPANY_ALIASES = ["company", "company name", "organization", "公司", "公司名称"];
+const PREV_SUBJECT_ALIASES = ["previous_subject", "prev_subject", "last_subject", "上封主题", "上次主题"];
+const FOLLOW_UP_NUM_ALIASES = ["follow_up_number", "follow_up_num", "followup_num", "第几封", "跟进次数"];
 
 function detectCol(fields: string[], aliases: string[]): string {
   return fields.find(f => aliases.includes(f.toLowerCase().trim())) ?? "";
@@ -39,7 +41,14 @@ function detectCol(fields: string[], aliases: string[]): string {
 
 type Step = "upload" | "configure" | "processing" | "results";
 
-interface Customer { url: string; email: string; name?: string; company?: string; }
+interface Customer {
+  url: string;
+  email: string;
+  name?: string;
+  company?: string;
+  previousSubject?: string;
+  followUpNumber?: number;
+}
 
 interface Result {
   customer: Customer;
@@ -90,7 +99,7 @@ export default function SmartEmailPage() {
   const [showSendModal, setShowSendModal] = useState(false);
 
   const downloadTemplate = () => {
-    const content = "url,email,name,company\nhttps://www.example.com,john@example.com,John Smith,Acme Corp";
+    const content = "url,email,name,company,previous_subject,follow_up_number\nhttps://www.example.com,john@example.com,John Smith,Acme Corp,,1\nhttps://www.example2.com,jane@example2.com,Jane Doe,Beta Ltd,Re: Solar Panel Quote,2";
     const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -108,6 +117,8 @@ export default function SmartEmailPage() {
       const emailCol = detectCol(fields, EMAIL_ALIASES);
       const nameCol = detectCol(fields, NAME_ALIASES);
       const companyCol = detectCol(fields, COMPANY_ALIASES);
+      const prevSubjectCol = detectCol(fields, PREV_SUBJECT_ALIASES);
+      const followUpNumCol = detectCol(fields, FOLLOW_UP_NUM_ALIASES);
 
       if (!urlCol || !emailCol) {
         alert("未找到 url 或 email 列，请下载模板后填写");
@@ -118,8 +129,10 @@ export default function SmartEmailPage() {
         .map(row => ({
           url: row[urlCol]?.trim(),
           email: row[emailCol]?.trim(),
-          name: nameCol ? row[nameCol]?.trim() : undefined,
-          company: companyCol ? row[companyCol]?.trim() : undefined,
+          name: nameCol ? row[nameCol]?.trim() || undefined : undefined,
+          company: companyCol ? row[companyCol]?.trim() || undefined : undefined,
+          previousSubject: prevSubjectCol ? row[prevSubjectCol]?.trim() || undefined : undefined,
+          followUpNumber: followUpNumCol ? parseInt(row[followUpNumCol]) || undefined : undefined,
         }))
         .filter(c => c.url && c.email);
 
@@ -245,6 +258,8 @@ export default function SmartEmailPage() {
           <div className="flex gap-1.5"><span className="text-red-500 font-bold">*</span><span className="text-gray-800">email — 客户邮箱（必填）</span></div>
           <div className="text-gray-500">name — 联系人姓名（可选）</div>
           <div className="text-gray-500">company — 公司名称（可选）</div>
+          <div className="text-gray-500">previous_subject — 上封邮件主题（跟进时填）</div>
+          <div className="text-gray-500">follow_up_number — 第几封（1=初次，2+=跟进）</div>
         </div>
         <p className="text-xs text-gray-400 mb-4">AI 会抓取每个网址，分析客户画像，再写针对性开发信 · 每个客户约需 15-20 秒</p>
         <button onClick={downloadTemplate}
@@ -418,6 +433,11 @@ export default function SmartEmailPage() {
                 {sendResults[idx] && (
                   <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${sendResults[idx] === "sent" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                     {sendResults[idx] === "sent" ? "已发送" : "发送失败"}
+                  </span>
+                )}
+                {r.customer.followUpNumber && r.customer.followUpNumber > 1 && (
+                  <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full flex-shrink-0">
+                    第{r.customer.followUpNumber}封跟进
                   </span>
                 )}
                 <div className="min-w-0">
