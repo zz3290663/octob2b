@@ -49,6 +49,7 @@ function buildPrompt(input: {
   priceRange: string;
   moq: string;
   context?: string;
+  regionalExp?: string;
 }) {
   const styleMap: Record<string, string> = {
     formal: "professional and formal",
@@ -70,7 +71,8 @@ Target Market: ${input.market}
 ${input.advantages ? `Company Advantages: ${input.advantages}` : ""}
 ${input.priceRange ? `Price Range: ${input.priceRange}` : ""}
 ${input.moq ? `MOQ: ${input.moq}` : ""}
-${input.context ? `Context / Background: ${input.context}` : ""}
+${input.regionalExp ? `Regional Experience / Case Studies: ${input.regionalExp} — weave this naturally into the email to build credibility, do NOT copy it verbatim` : ""}
+${input.context ? `Additional Requirements from sender (follow these instructions): ${input.context}` : ""}
 
 【Requirements】
 1. Professional, natural English that reads like a native speaker wrote it
@@ -141,14 +143,14 @@ export async function POST(req: NextRequest) {
 
   // 4. 解析参数
   const body = await req.json();
-  const { templateKey, style, product, market, advantages, priceRange, moq, context } = body;
+  const { templateKey, style, product, market, advantages, priceRange, moq, context, regionalExp } = body;
 
   if (!product || !market) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
   }
 
   // 5. 调用 DeepSeek
-  const prompt = buildPrompt({ templateKey, style: style || "formal", product, market, advantages, priceRange, moq, context });
+  const prompt = buildPrompt({ templateKey, style: style || "formal", product, market, advantages, priceRange, moq, context, regionalExp });
   const start = Date.now();
 
   try {

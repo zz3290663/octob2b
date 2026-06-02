@@ -53,6 +53,7 @@ export default function ColdEmailPage() {
   const [priceRange, setPriceRange] = useState("mid-range");
   const [moq, setMoq] = useState("");
   const [context, setContext] = useState("");
+  const [regionalExp, setRegionalExp] = useState("");
 
   // 生成状态
   const [generating, setGenerating] = useState(false);
@@ -104,7 +105,7 @@ export default function ColdEmailPage() {
       const res = await fetch("/api/tools/cold-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateKey: selectedTemplate, style, product, market, advantages, priceRange, moq, context }),
+        body: JSON.stringify({ templateKey: selectedTemplate, style, product, market, advantages, priceRange, moq, context, regionalExp }),
       });
       const data = await res.json();
 
@@ -359,30 +360,44 @@ export default function ColdEmailPage() {
             </div>
           </div>
 
-          {/* 补充背景（部分场景适用） */}
-          {["quote_followup", "reactivate", "new_product", "holiday", "order_push", "visit_request", "expo_invite", "meeting_invite"].includes(selectedTemplate) && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                补充背景 <span className="text-gray-400 font-normal">（可选）</span>
-              </label>
-              <textarea
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-                placeholder={
-                  selectedTemplate === "quote_followup"  ? "如：2周前发了报价单，未收到反馈"
-                  : selectedTemplate === "reactivate"    ? "如：上次合作是2年前，客户买过100套产品"
-                  : selectedTemplate === "new_product"   ? "如：客户以前买过A款，新推出B款更省电"
-                  : selectedTemplate === "order_push"    ? "如：上次订单是3个月前，客户通常每季度复购"
-                  : selectedTemplate === "visit_request" ? "如：下月初去德国出差，希望顺道登门拜访"
-                  : selectedTemplate === "expo_invite"   ? "如：2024广交会，10月15-19日，A馆3楼B21展位"
-                  : selectedTemplate === "meeting_invite"? "如：希望介绍新款产品，讨论年度采购计划，30分钟"
-                  : "如：即将到来的圣诞节"
-                }
-                rows={2}
-                className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none text-sm"
-              />
-            </div>
-          )}
+          {/* 国家/地区经验 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              国家/地区经验 <span className="text-gray-400 font-normal">（可选）</span>
+            </label>
+            <input
+              value={regionalExp}
+              onChange={(e) => setRegionalExp(e.target.value)}
+              placeholder="如：在尼日利亚有3个长期客户，合作超过2年；在德国出口5年，服务30+客户"
+              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+            />
+            <p className="text-xs text-gray-400 mt-1">AI 会将此经验自然融入邮件，增加可信度</p>
+          </div>
+
+          {/* 额外要求 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              额外要求 <span className="text-gray-400 font-normal">（可选）</span>
+            </label>
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder={
+                selectedTemplate === "quote_followup"  ? "如：2周前发了报价单，未收到反馈；或：重点强调我们可以提供30天账期"
+                : selectedTemplate === "reactivate"    ? "如：上次合作是2年前，客户买过100套；或：这次想推荐升级款"
+                : selectedTemplate === "new_product"   ? "如：客户以前买过A款，新推出B款更省电"
+                : selectedTemplate === "order_push"    ? "如：上次订单是3个月前，客户通常每季度复购"
+                : selectedTemplate === "visit_request" ? "如：下月初去德国出差，希望顺道登门拜访"
+                : selectedTemplate === "expo_invite"   ? "如：2024广交会，10月15-19日，A馆3楼B21展位"
+                : selectedTemplate === "meeting_invite"? "如：希望介绍新款产品，讨论年度采购计划，30分钟"
+                : selectedTemplate === "holiday"       ? "如：即将到来的圣诞节；或：顺带提一下我们Q1有促销活动"
+                : "告诉 AI 你想重点强调什么，或对邮件有什么特殊要求"
+              }
+              rows={2}
+              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none text-sm"
+            />
+            <p className="text-xs text-gray-400 mt-1">AI 会按照你的要求调整邮件内容</p>
+          </div>
 
           {error && <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>}
 
