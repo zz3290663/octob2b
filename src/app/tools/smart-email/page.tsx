@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import * as XLSX from "xlsx";
 
 // ── CSV 解析 ──────────────────────────────────────────────────────────────────
 function parseCSV(text: string): { fields: string[]; data: Record<string, string>[] } {
@@ -108,11 +109,12 @@ export default function SmartEmailPage() {
   };
 
   const handleFile = useCallback((file: File) => {
-    if (!file.name.endsWith(".csv")) { alert("请上传 CSV 文件"); return; }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const { fields, data } = parseCSV(text);
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext !== "csv" && ext !== "xlsx" && ext !== "xls") {
+      alert("请上传 CSV 或 Excel（.xlsx）文件");
+      return;
+    }
+    const processData = (fields: string[], data: Record<string, string>[]) => {
       const urlCol = detectCol(fields, URL_ALIASES);
       const emailCol = detectCol(fields, EMAIL_ALIASES);
       const nameCol = detectCol(fields, NAME_ALIASES);
@@ -140,7 +142,31 @@ export default function SmartEmailPage() {
       setCustomers(valid);
       setStep("configure");
     };
-    reader.readAsText(file, "UTF-8");
+
+    if (ext === "csv") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const { fields, data } = parseCSV(e.target?.result as string);
+        processData(fields, data);
+      };
+      reader.readAsText(file, "UTF-8");
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const workbook = XLSX.read(e.target?.result as ArrayBuffer, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: "" });
+        if (rows.length < 2) { alert("表格内容为空"); return; }
+        const fields = (rows[0] as string[]).map(f => String(f).trim());
+        const data = (rows.slice(1) as string[][]).map(row => {
+          const record: Record<string, string> = {};
+          fields.forEach((f, i) => { record[f] = String(row[i] ?? "").trim(); });
+          return record;
+        });
+        processData(fields, data);
+      };
+      reader.readAsArrayBuffer(file);
+    }
   }, []);
 
   const handleGenerate = async () => {
@@ -246,8 +272,8 @@ export default function SmartEmailPage() {
       >
         <div className="text-5xl mb-4">🎯</div>
         <p className="text-gray-700 font-medium">拖拽 CSV 文件到这里，或点击选择</p>
-        <p className="text-sm text-gray-400 mt-2">必须包含 url 和 email 两列</p>
-        <input ref={fileInputRef} type="file" accept=".csv" className="hidden"
+        <p className="text-sm text-gray-400 mt-2">支持 CSV 和 Excel（.xlsx），必须包含 url 和 email 两列</p>
+        <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
       </div>
 

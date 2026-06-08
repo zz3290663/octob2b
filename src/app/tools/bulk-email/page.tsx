@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
+import * as XLSX from "xlsx";
 
 // 简易 CSV 解析（支持带引号的字段）
 function parseCSVText(text: string): { fields: string[]; data: Record<string, string>[] } {
@@ -34,6 +35,21 @@ function parseCSVText(text: string): { fields: string[]; data: Record<string, st
     const row: Record<string, string> = {};
     fields.forEach((f, i) => { row[f] = vals[i] ?? ""; });
     return row;
+  });
+  return { fields, data };
+}
+
+// XLSX 解析
+function parseXLSX(buffer: ArrayBuffer): { fields: string[]; data: Record<string, string>[] } {
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: "" });
+  if (rows.length < 2) return { fields: [], data: [] };
+  const fields = (rows[0] as string[]).map(f => String(f).trim());
+  const data = (rows.slice(1) as string[][]).map(row => {
+    const record: Record<string, string> = {};
+    fields.forEach((f, i) => { record[f] = String(row[i] ?? "").trim(); });
+    return record;
   });
   return { fields, data };
 }
@@ -135,14 +151,11 @@ export default function BulkEmailPage() {
 
   const handleFile = useCallback((file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
-    if (ext !== "csv") {
-      alert("请上传 CSV 文件（Excel 请另存为 CSV 后上传）");
+    if (ext !== "csv" && ext !== "xlsx" && ext !== "xls") {
+      alert("请上传 CSV 或 Excel（.xlsx）文件");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const { fields, data } = parseCSVText(text);
+    const applyData = (fields: string[], data: Record<string, string>[]) => {
       setRawData(data);
       setColumns(fields);
       const mapping: Record<string, string> = {};
@@ -153,7 +166,21 @@ export default function BulkEmailPage() {
       setFieldMapping(mapping);
       setStep("configure");
     };
-    reader.readAsText(file, "UTF-8");
+    if (ext === "csv") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const { fields, data } = parseCSVText(e.target?.result as string);
+        applyData(fields, data);
+      };
+      reader.readAsText(file, "UTF-8");
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const { fields, data } = parseXLSX(e.target?.result as ArrayBuffer);
+        applyData(fields, data);
+      };
+      reader.readAsArrayBuffer(file);
+    }
   }, []);
 
   const mapRow = (row: Record<string, string>): Customer => {
@@ -397,11 +424,11 @@ export default function BulkEmailPage() {
         >
           <div className="text-5xl mb-4">📂</div>
           <p className="text-gray-700 font-medium">拖拽文件到这里，或点击选择</p>
-          <p className="text-sm text-gray-400 mt-2">支持 CSV 格式（Excel 请另存为 CSV 后上传）</p>
+          <p className="text-sm text-gray-400 mt-2">支持 CSV 和 Excel（.xlsx）格式</p>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
