@@ -34,10 +34,23 @@ function getTitle(r: HistoryRecord): string {
 
 export default function HistoryClient({ records }: { records: HistoryRecord[] }) {
   const [filter, setFilter] = useState<"all" | "cold_email" | "bulk_email">("all");
+  const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const filtered = records.filter((r) => filter === "all" || r.type === filter);
+  const keyword = search.trim().toLowerCase();
+
+  const filtered = records.filter((r) => {
+    if (filter !== "all" && r.type !== filter) return false;
+    if (!keyword) return true;
+    return (
+      r.company?.toLowerCase().includes(keyword) ||
+      r.subject?.toLowerCase().includes(keyword) ||
+      r.meta?.customer_email?.toLowerCase().includes(keyword) ||
+      r.meta?.product?.toLowerCase().includes(keyword) ||
+      r.body?.toLowerCase().includes(keyword)
+    );
+  });
 
   const copyRecord = (r: HistoryRecord) => {
     const text = r.subject
@@ -59,6 +72,22 @@ export default function HistoryClient({ records }: { records: HistoryRecord[] })
           <h1 className="text-2xl font-bold text-gray-900 mt-2">历史记录</h1>
           <p className="text-sm text-gray-500 mt-1">共 {records.length} 条生成记录</p>
         </div>
+      </div>
+
+      {/* 搜索 */}
+      <div className="relative mb-4">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="搜索邮箱、公司名、主题关键词..."
+          className="w-full pl-9 pr-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">
+            ✕
+          </button>
+        )}
       </div>
 
       {/* 筛选 */}
@@ -85,7 +114,7 @@ export default function HistoryClient({ records }: { records: HistoryRecord[] })
       {filtered.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <div className="text-4xl mb-4">📭</div>
-          <p className="text-sm">暂无记录</p>
+          <p className="text-sm">{keyword ? `没有找到「${search}」相关的记录` : "暂无记录"}</p>
           <div className="mt-6 flex gap-3 justify-center">
             <Link href="/tools/cold-email" className="text-sm text-blue-600 hover:underline">
               去生成开发信 →
