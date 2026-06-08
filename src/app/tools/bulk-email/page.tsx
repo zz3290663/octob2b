@@ -80,6 +80,7 @@ const SCENARIOS = [
   { value: "quote_followup", label: "报价后跟进",     desc: "发完报价后没有收到回复" },
   { value: "lost_deal",      label: "未成交二次跟进", desc: "重新接触之前没有成交的客户" },
   { value: "holiday",        label: "节日问候",       desc: "节日维护客户关系" },
+  { value: "visit_invite",   label: "邀约上门拜访",   desc: "多次发信无回复，申请登门拜访" },
 ];
 
 const FIELD_LABELS: Record<string, string> = {

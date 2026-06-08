@@ -9,6 +9,7 @@ const SCENARIO_DESC: Record<string, string> = {
   quote_followup: "Quote follow-up — follow up after sending a quotation that received no reply. Be polite but create gentle urgency.",
   lost_deal: "Lost deal re-engagement — re-approach a prospect who didn't convert previously. Acknowledge time has passed, offer fresh value.",
   holiday: "Holiday greeting — warm, genuine holiday greetings that maintain the business relationship without being too salesy.",
+  visit_invite: "In-person visit invitation — the sender has already sent several cold emails with no reply. Now requesting to visit the customer's office or factory in person. Open by briefly acknowledging the previous unanswered outreach without being awkward about it. Make a clear, specific request to visit, explain the value of the meeting (samples to show, deeper discussion, relationship building). Propose a flexible time window. Use any customer notes provided to make the request feel tailored and relevant. Keep it warm, confident, and easy to say yes to.",
 };
 
 function buildPrompt(
