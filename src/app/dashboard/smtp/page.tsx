@@ -32,6 +32,19 @@ const GUIDES: { name: string; steps: string[]; note?: string }[] = [
     note: "⚠️ 密码填授权码，不是 QQ 登录密码",
   },
   {
+    name: "126邮箱",
+    steps: [
+      "用浏览器打开 mail.126.com，用账号密码登录",
+      "点击顶部导航「设置」→「POP3/SMTP/IMAP」",
+      "找到「SMTP服务」一行，点击「开启」",
+      "系统会要求手机验证（扫码或发短信），完成验证",
+      "验证成功后页面会弹出「授权密码」，这是一串随机字母，立刻复制保存（页面关闭后不再显示）",
+      "回到这里：SMTP服务器填 smtp.126.com，端口 465，SSL加密",
+      "用户名填完整邮箱地址（如 abc@126.com），密码填刚才复制的授权密码",
+    ],
+    note: "⚠️ 必须填「授权密码」，不能填邮箱登录密码，否则报 535 错误",
+  },
+  {
     name: "163邮箱",
     steps: [
       "登录 163 邮箱（mail.163.com）",
@@ -84,6 +97,7 @@ const SMTP_PRESETS: Record<string, { host: string; port: number; secure_type: st
   Gmail: { host: "smtp.gmail.com", port: 465, secure_type: "SSL" },
   Outlook: { host: "smtp.office365.com", port: 587, secure_type: "STARTTLS" },
   "163邮箱": { host: "smtp.163.com", port: 465, secure_type: "SSL" },
+  "126邮箱": { host: "smtp.126.com", port: 465, secure_type: "SSL" },
   "QQ邮箱": { host: "smtp.qq.com", port: 465, secure_type: "SSL" },
   "企业微信邮箱": { host: "smtp.exmail.qq.com", port: 465, secure_type: "SSL" },
   "Hostinger": { host: "smtp.hostinger.com", port: 465, secure_type: "SSL" },
