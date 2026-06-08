@@ -143,7 +143,6 @@ export default function BulkEmailPage() {
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
   const [scenario, setScenario] = useState("reactivate");
   const [extra, setExtra] = useState("");
-  const [senderName, setSenderName] = useState("");
   const [results, setResults] = useState<EmailResult[]>([]);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
@@ -211,7 +210,7 @@ export default function BulkEmailPage() {
         const res = await fetch("/api/tools/bulk-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ customer: customers[i], scenario, extraRequirements: extra, senderName: senderName.trim() || undefined }),
+          body: JSON.stringify({ customer: customers[i], scenario, extraRequirements: extra }),
         });
         const data = await res.json();
         setResults((prev) =>
@@ -543,20 +542,6 @@ export default function BulkEmailPage() {
               </label>
             ))}
           </div>
-        </div>
-
-        {/* 发件人姓名 */}
-        <div className="bg-white rounded-xl border p-6 mb-4">
-          <p className="text-sm font-medium text-gray-700 mb-1">
-            发件人姓名 <span className="text-gray-400 font-normal">（用于邮件落款）</span>
-          </p>
-          <input
-            value={senderName}
-            onChange={e => setSenderName(e.target.value)}
-            placeholder="如：Wei Zhang / 张伟"
-            className="w-full mt-1 text-sm border rounded-lg px-4 py-2.5 text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-          <p className="text-xs text-gray-400 mt-1">AI 会用这个名字写邮件落款，不填则不显示名字</p>
         </div>
 
         {/* Extra requirements */}

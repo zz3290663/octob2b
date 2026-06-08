@@ -16,8 +16,6 @@ function buildPrompt(
   customer: Record<string, string>,
   scenario: string,
   extraRequirements: string,
-  senderName?: string,
-  senderEmail?: string,
 ): string {
   const scenarioDesc = SCENARIO_DESC[scenario] || scenario;
 
@@ -44,10 +42,6 @@ ${scenarioDesc}
 【Customer Information】
 ${info || "(Limited info — write a general but professional email)"}
 
-【Sender Information】
-${senderName ? `Sender Name: ${senderName}` : ""}
-${senderEmail ? `Sender Email: ${senderEmail}` : ""}
-
 ${extraRequirements ? `【Additional Requirements from Sender】\n${extraRequirements}\n` : ""}
 【Writing Rules】
 1. Professional, natural English — reads like a native speaker wrote it
@@ -56,7 +50,7 @@ ${extraRequirements ? `【Additional Requirements from Sender】\n${extraRequire
 4. Do NOT start with "I hope this email finds you well" or "I'm writing to inform you"
 5. Personalize using the customer info — don't write a generic template
 6. End with a single, easy-to-act-on call to action
-7. Sign off with the sender's real name if provided — do NOT use placeholder text like [Your Name]
+7. End the email body with "Best regards," only — do not add any name or placeholder after it
 
 Output EXACTLY in this format (no extra text, no markdown):
 SUBJECT: [subject line here]
@@ -71,24 +65,12 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
-  const { customer, scenario, extraRequirements, senderName } = await req.json();
+  const { customer, scenario, extraRequirements } = await req.json();
   if (!customer?.email) {
     return NextResponse.json({ error: "缺少邮箱" }, { status: 400 });
   }
 
-  const { data: smtpConfig } = await supabase
-    .from("smtp_configs")
-    .select("sender_name, sender_email")
-    .eq("user_id", user.id)
-    .single();
-
-  const prompt = buildPrompt(
-    customer,
-    scenario || "reactivate",
-    extraRequirements || "",
-    senderName || smtpConfig?.sender_name || undefined,
-    smtpConfig?.sender_email || undefined,
-  );
+  const prompt = buildPrompt(customer, scenario || "reactivate", extraRequirements || "");
 
   try {
     const res = await fetch("https://api.deepseek.com/v1/chat/completions", {

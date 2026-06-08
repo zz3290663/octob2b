@@ -50,8 +50,6 @@ function buildPrompt(input: {
   moq: string;
   context?: string;
   regionalExp?: string;
-  senderName?: string;
-  senderEmail?: string;
 }) {
   const styleMap: Record<string, string> = {
     formal: "professional and formal",
@@ -73,8 +71,6 @@ Target Market: ${input.market}
 ${input.advantages ? `Company Advantages: ${input.advantages}` : ""}
 ${input.priceRange ? `Price Range: ${input.priceRange}` : ""}
 ${input.moq ? `MOQ: ${input.moq}` : ""}
-${input.senderName ? `Sender Name: ${input.senderName}` : ""}
-${input.senderEmail ? `Sender Email: ${input.senderEmail}` : ""}
 ${input.regionalExp ? `Regional Experience / Case Studies: ${input.regionalExp} — weave this naturally into the email to build credibility, do NOT copy it verbatim` : ""}
 ${input.context ? `Additional Requirements from sender (follow these instructions): ${input.context}` : ""}
 
@@ -153,19 +149,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
   }
 
-  // 5. 读取发件人姓名（来自 SMTP 配置，用于邮件落款）
-  const { data: smtpConfig } = await supabase
-    .from("smtp_configs")
-    .select("sender_name, sender_email")
-    .eq("user_id", user.id)
-    .single();
-
-  // 6. 调用 DeepSeek
-  const prompt = buildPrompt({
-    templateKey, style: style || "formal", product, market, advantages, priceRange, moq, context, regionalExp,
-    senderName: smtpConfig?.sender_name || undefined,
-    senderEmail: smtpConfig?.sender_email || undefined,
-  });
+  // 5. 调用 DeepSeek
+  const prompt = buildPrompt({ templateKey, style: style || "formal", product, market, advantages, priceRange, moq, context, regionalExp });
   const start = Date.now();
 
   try {
