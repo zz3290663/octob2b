@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
-  const { customer_email, customer_company, subject, content } = await req.json();
+  const { customer_email, customer_company, subject, content, cc } = await req.json();
   if (!customer_email || !subject || !content) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
   }
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 
   // 发送邮件
   try {
-    await sendEmail(smtpConfig, customer_email, subject, finalContent);
+    await sendEmail(smtpConfig, customer_email, subject, finalContent, cc || undefined);
 
     await supabase
       .from("email_sends")

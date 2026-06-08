@@ -98,6 +98,7 @@ export default function SmartEmailPage() {
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
   const [sendResults, setSendResults] = useState<Record<number, "sent" | "failed">>({});
   const [showSendModal, setShowSendModal] = useState(false);
+  const [ccEmail, setCcEmail] = useState("");
 
   const downloadTemplate = () => {
     const content = "url,email,name,company,previous_subject,follow_up_number\nhttps://www.example.com,john@example.com,John Smith,Acme Corp,,1\nhttps://www.example2.com,jane@example2.com,Jane Doe,Beta Ltd,Re: Solar Panel Quote,2";
@@ -236,6 +237,7 @@ export default function SmartEmailPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             customer_email: r.customer.email,
+            cc: ccEmail.trim() || undefined,
             customer_company: r.company_name || r.customer.company || "",
             subject: r.subject,
             content: r.body,
@@ -425,6 +427,16 @@ export default function SmartEmailPage() {
             <h3 className="text-lg font-bold text-gray-900 mb-2">确认发送</h3>
             <p className="text-sm text-gray-600 mb-1">将发送 <span className="font-medium text-blue-600">{doneCount}</span> 封个性化开发信</p>
             <p className="text-sm text-gray-500 mb-4">每封间隔 30 秒，请保持页面开启</p>
+            <div className="mb-4">
+              <label className="text-xs font-medium text-gray-600 block mb-1">抄送 <span className="text-gray-400 font-normal">（可选，每封都会抄送）</span></label>
+              <input
+                type="email"
+                value={ccEmail}
+                onChange={e => setCcEmail(e.target.value)}
+                placeholder="cc@example.com"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
             <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
               ⚠️ 每天最多发送 50 封
             </div>

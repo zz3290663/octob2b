@@ -31,12 +31,14 @@ export async function sendEmail(
   config: SmtpConfig,
   to: string,
   subject: string,
-  body: string
+  body: string,
+  cc?: string
 ): Promise<void> {
   const transporter = createTransporter(config);
   await transporter.sendMail({
     from: `"${config.sender_name}" <${config.sender_email}>`,
     to,
+    ...(cc ? { cc } : {}),
     subject,
     text: body,
   });
