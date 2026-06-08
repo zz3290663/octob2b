@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
-  const { customer, scenario, extraRequirements } = await req.json();
+  const { customer, scenario, extraRequirements, senderName } = await req.json();
   if (!customer?.email) {
     return NextResponse.json({ error: "缺少邮箱" }, { status: 400 });
   }
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     customer,
     scenario || "reactivate",
     extraRequirements || "",
-    smtpConfig?.sender_name || undefined,
+    senderName || smtpConfig?.sender_name || undefined,
     smtpConfig?.sender_email || undefined,
   );
 
