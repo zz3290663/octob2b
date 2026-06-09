@@ -54,14 +54,8 @@ export default function RegisterPage() {
           <p className="text-sm text-gray-500 mt-2">每天免费生成3封开发信</p>
         </div>
 
-        {message ? (
-          <div
-            className={`p-4 rounded-lg text-sm ${
-              message.type === "success"
-                ? "bg-green-50 text-green-700 border border-green-200"
-                : "bg-red-50 text-red-700 border border-red-200"
-            }`}
-          >
+        {message?.type === "success" ? (
+          <div className="p-4 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200">
             {message.text}
           </div>
         ) : (
@@ -107,6 +101,12 @@ export default function RegisterPage() {
                 className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
+
+            {message?.type === "error" && (
+              <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+                {message.text}
+              </div>
+            )}
 
             <button
               type="submit"
