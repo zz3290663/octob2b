@@ -502,7 +502,7 @@ export default function QuoteGeneratorPage() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 text-center mt-4">点击"复制报价单"获取纯文本版本，可直接粘贴到邮件中发送</p>
+      <p className="text-xs text-gray-400 text-center mt-4">点击&ldquo;复制报价单&rdquo;获取纯文本版本，可直接粘贴到邮件中发送</p>
     </main>
   );
 }
