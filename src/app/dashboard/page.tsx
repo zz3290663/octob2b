@@ -131,6 +131,28 @@ export default async function DashboardPage() {
         </Link>
 
         <Link
+          href="/tools/quote-generator"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">报价单生成器</p>
+            <p className="text-sm text-gray-500">粘贴客户需求，AI 解析后一键生成专业报价单</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
+
+        <Link
+          href="/dashboard/company-profile"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">公司信息配置</p>
+            <p className="text-sm text-gray-500">配置公司名称、联系方式，自动出现在报价单抬头</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
+
+        <Link
           href="/dashboard/smtp"
           className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
         >
