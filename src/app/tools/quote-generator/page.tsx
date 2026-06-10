@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 
 interface LineItem {
@@ -71,8 +71,10 @@ export default function QuoteGeneratorPage() {
   const [company, setCompany] = useState<CompanyProfile | null>(null);
   const [companyLoaded, setCompanyLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [quoteNumber] = useState(() => quoteNo());
   const [quoteDate] = useState(() => formatDate(new Date()));
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/company-profile")
@@ -202,6 +204,55 @@ export default function QuoteGeneratorPage() {
     navigator.clipboard.writeText(buildPlainText());
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!previewRef.current) return;
+    setDownloading(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const canvas = await html2canvas(previewRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const imgW = pageW - margin * 2;
+      const imgH = (canvas.height * imgW) / canvas.width;
+
+      let y = margin;
+      let remainH = imgH;
+
+      while (remainH > 0) {
+        const sliceH = Math.min(remainH, pageH - margin * 2);
+        const srcY = (imgH - remainH) * (canvas.height / imgH);
+        const srcH = sliceH * (canvas.height / imgH);
+
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = srcH;
+        const ctx = sliceCanvas.getContext("2d")!;
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+        pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", margin, y, imgW, sliceH);
+        remainH -= sliceH;
+        if (remainH > 0) { pdf.addPage(); y = margin; }
+      }
+
+      pdf.save(`${quoteNumber}.pdf`);
+    } catch (e) {
+      console.error(e);
+      alert("PDF 生成失败，请重试");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   // ── Step 1: Input ─────────────────────────────────────────────────────────
@@ -390,14 +441,18 @@ export default function QuoteGeneratorPage() {
             重新开始
           </button>
           <button onClick={handleCopy}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">
-            {copied ? "✓ 已复制" : "复制报价单"}
+            className="px-5 py-2.5 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50">
+            {copied ? "✓ 已复制" : "复制文本"}
+          </button>
+          <button onClick={handleDownloadPDF} disabled={downloading}
+            className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+            {downloading ? "生成中..." : "下载 PDF"}
           </button>
         </div>
       </div>
 
       {/* Quote preview card */}
-      <div className="bg-white rounded-xl border shadow-sm p-8 font-sans">
+      <div ref={previewRef} className="bg-white rounded-xl border shadow-sm p-8 font-sans">
         {/* Header */}
         {company ? (
           <div className="mb-6 pb-6 border-b">
