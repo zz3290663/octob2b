@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface LineItem {
   id: number;
@@ -25,6 +26,7 @@ interface CompanyProfile {
   delivery_days: number;
   validity_days: number;
   bank_info: string;
+  logo_url: string;
 }
 
 type Step = "input" | "edit" | "preview";
@@ -455,15 +457,29 @@ export default function QuoteGeneratorPage() {
       <div ref={previewRef} className="bg-white rounded-xl border shadow-sm p-8 font-sans">
         {/* Header */}
         {company ? (
-          <div className="mb-6 pb-6 border-b">
-            <h2 className="text-xl font-bold text-gray-900">{company.company_name_en}</h2>
-            {company.company_name_cn && <p className="text-sm text-gray-600 mt-0.5">{company.company_name_cn}</p>}
-            {company.address && <p className="text-xs text-gray-500 mt-2">{company.address}</p>}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-              {company.phone && <span className="text-xs text-gray-500">📞 {company.phone}</span>}
-              {company.email && <span className="text-xs text-gray-500">✉️ {company.email}</span>}
-              {company.website && <span className="text-xs text-gray-500">🌐 {company.website}</span>}
+          <div className="mb-6 pb-6 border-b flex items-start justify-between gap-6">
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-gray-900">{company.company_name_en}</h2>
+              {company.company_name_cn && <p className="text-sm text-gray-600 mt-0.5">{company.company_name_cn}</p>}
+              {company.address && <p className="text-xs text-gray-500 mt-2">{company.address}</p>}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                {company.phone && <span className="text-xs text-gray-500">📞 {company.phone}</span>}
+                {company.email && <span className="text-xs text-gray-500">✉️ {company.email}</span>}
+                {company.website && <span className="text-xs text-gray-500">🌐 {company.website}</span>}
+              </div>
             </div>
+            {company.logo_url && (
+              <div className="flex-shrink-0">
+                <Image
+                  src={company.logo_url}
+                  alt="Company Logo"
+                  width={120}
+                  height={60}
+                  className="object-contain max-h-16"
+                  unoptimized
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div className="mb-6 pb-6 border-b">

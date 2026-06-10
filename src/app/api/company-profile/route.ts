@@ -36,6 +36,7 @@ export async function PUT(req: NextRequest) {
       delivery_days: Number(body.delivery_days) || 30,
       validity_days: Number(body.validity_days) || 30,
       bank_info: body.bank_info ?? "",
+      logo_url: body.logo_url ?? "",
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface CompanyProfile {
   company_name_en: string;
@@ -14,6 +15,7 @@ interface CompanyProfile {
   delivery_days: number;
   validity_days: number;
   bank_info: string;
+  logo_url: string;
 }
 
 const DEFAULT: CompanyProfile = {
@@ -27,6 +29,7 @@ const DEFAULT: CompanyProfile = {
   delivery_days: 30,
   validity_days: 30,
   bank_info: "",
+  logo_url: "",
 };
 
 export default function CompanyProfilePage() {
@@ -35,6 +38,9 @@ export default function CompanyProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/company-profile")
@@ -52,6 +58,7 @@ export default function CompanyProfilePage() {
             delivery_days: data.delivery_days ?? 30,
             validity_days: data.validity_days ?? 30,
             bank_info: data.bank_info ?? "",
+            logo_url: data.logo_url ?? "",
           });
         }
       })
@@ -60,6 +67,23 @@ export default function CompanyProfilePage() {
 
   const set = (key: keyof CompanyProfile, value: string | number) =>
     setForm(f => ({ ...f, [key]: value }));
+
+  const handleLogoUpload = async (file: File) => {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/company-profile/logo", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.error) { setUploadError(data.error); return; }
+      setForm(f => ({ ...f, logo_url: data.url }));
+    } catch {
+      setUploadError("上传失败，请重试");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -97,6 +121,68 @@ export default function CompanyProfilePage() {
       </div>
 
       <div className="bg-white rounded-xl border p-6 space-y-5">
+
+        {/* Logo 上传 */}
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-3">公司 Logo</p>
+          <div className="flex items-center gap-4">
+            {/* 预览 */}
+            <div
+              className="w-24 h-24 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center bg-gray-50 flex-shrink-0 cursor-pointer hover:border-blue-300 transition-colors overflow-hidden"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {form.logo_url ? (
+                <Image
+                  src={form.logo_url}
+                  alt="Logo"
+                  width={96}
+                  height={96}
+                  className="object-contain w-full h-full p-1"
+                  unoptimized
+                />
+              ) : (
+                <div className="text-center">
+                  <div className="text-2xl text-gray-300">🖼</div>
+                  <p className="text-xs text-gray-400 mt-1">点击上传</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) handleLogoUpload(f);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {uploading ? "上传中..." : form.logo_url ? "重新上传" : "选择图片"}
+              </button>
+              {form.logo_url && (
+                <button
+                  onClick={() => setForm(f => ({ ...f, logo_url: "" }))}
+                  className="ml-2 px-3 py-2 text-sm text-red-400 hover:text-red-600"
+                >
+                  删除
+                </button>
+              )}
+              <p className="text-xs text-gray-400 mt-2">支持 PNG、JPG、SVG · 建议尺寸 400×150px 以内</p>
+              {uploadError && <p className="text-xs text-red-500 mt-1">{uploadError}</p>}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t" />
+
         {/* 公司名称 */}
         <div>
           <p className="text-sm font-semibold text-gray-700 mb-3">公司名称</p>
