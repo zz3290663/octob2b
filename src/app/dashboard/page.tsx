@@ -142,6 +142,18 @@ export default async function DashboardPage() {
         </Link>
 
         <Link
+          href="https://img.octob2b.com"
+          target="_blank"
+          className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
+        >
+          <div>
+            <p className="font-medium text-gray-900">产品图片处理</p>
+            <p className="text-sm text-gray-500">AI 一键换背景、修复产品瑕疵，同账号直接登录</p>
+          </div>
+          <span className="text-gray-400">→</span>
+        </Link>
+
+        <Link
           href="/dashboard/company-profile"
           className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition"
         >

@@ -48,6 +48,9 @@ export default function Header() {
           <Link href="/tools/quote-generator" className="text-sm text-gray-600 hover:text-blue-600">
             报价单
           </Link>
+          <Link href="https://img.octob2b.com" target="_blank" className="text-sm text-gray-600 hover:text-blue-600">
+            图片处理
+          </Link>
           <Link href="/#pricing" className="text-sm text-gray-600 hover:text-blue-600">
             价格
           </Link>
