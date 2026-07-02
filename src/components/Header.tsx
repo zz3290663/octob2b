@@ -4,17 +4,29 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 
 export default function Header() {
-  const [user, setUser] = useState<{ email?: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [credits, setCredits] = useState<number | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
+  const fetchCredits = async (userId: string) => {
+    const { data } = await supabase.from("profile").select("credits").eq("id", userId).single();
+    setCredits(data?.credits ?? 0);
+  };
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) =>
-      setUser(session?.user ?? null)
-    );
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      if (data.user) fetchCredits(data.user.id);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) fetchCredits(session.user.id);
+      else setCredits(null);
+    });
     return () => listener.subscription.unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -51,8 +63,8 @@ export default function Header() {
           <Link href="https://img.octob2b.com" target="_blank" className="text-sm text-gray-600 hover:text-blue-600">
             图片处理
           </Link>
-          <Link href="/#pricing" className="text-sm text-gray-600 hover:text-blue-600">
-            价格
+          <Link href="/redeem" className="text-sm text-gray-600 hover:text-blue-600">
+            兑换次数
           </Link>
           <Link href="/contact" className="text-sm text-gray-600 hover:text-blue-600">
             联系我们
@@ -60,16 +72,15 @@ export default function Header() {
 
           {user ? (
             <div className="flex items-center gap-3">
-              <Link
-                href="/dashboard"
-                className="text-sm text-gray-600 hover:text-blue-600"
-              >
+              <Link href="/dashboard" className="text-sm text-gray-600 hover:text-blue-600">
                 会员中心
               </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-sm text-gray-400 hover:text-gray-600"
-              >
+              <Link href="/redeem"
+                className="flex items-center gap-1 text-sm bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-100">
+                <span className="font-semibold">{credits ?? "–"}</span>
+                <span>次</span>
+              </Link>
+              <button onClick={handleSignOut} className="text-sm text-gray-400 hover:text-gray-600">
                 退出
               </button>
             </div>

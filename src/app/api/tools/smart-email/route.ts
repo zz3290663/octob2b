@@ -71,6 +71,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
+  const { data: profile } = await supabase.from("profile").select("credits, is_premium").eq("id", user.id).single();
+  if (!profile?.is_premium && (profile?.credits ?? 0) <= 0) {
+    return NextResponse.json({ error: "free_limit" }, { status: 403 });
+  }
+
   const { url, email, name, company, product, market, advantages, priceRange, style, previousSubject, followUpNumber } = await req.json();
   if (!url || !email || !product || !market) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
@@ -120,6 +125,9 @@ export async function POST(req: NextRequest) {
       meta: { source: "smart_email", url: targetUrl, followUpNumber: followUpNumber ?? 1 },
     });
 
+    if (!profile?.is_premium) {
+      await supabase.from("profile").update({ credits: (profile?.credits ?? 1) - 1 }).eq("id", user.id);
+    }
     return NextResponse.json({ ...result, url: targetUrl });
   } catch (err) {
     console.error("smart-email error:", err);

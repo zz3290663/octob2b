@@ -65,6 +65,11 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
+  const { data: profile } = await supabase.from("profile").select("credits, is_premium").eq("id", user.id).single();
+  if (!profile?.is_premium && (profile?.credits ?? 0) <= 0) {
+    return NextResponse.json({ error: "free_limit" }, { status: 403 });
+  }
+
   const { customer, scenario, extraRequirements } = await req.json();
   if (!customer?.email) {
     return NextResponse.json({ error: "缺少邮箱" }, { status: 400 });
@@ -110,6 +115,9 @@ export async function POST(req: NextRequest) {
       meta: { scenario, customer_email: customer.email },
     });
 
+    if (!profile?.is_premium) {
+      await supabase.from("profile").update({ credits: (profile?.credits ?? 1) - 1 }).eq("id", user.id);
+    }
     return NextResponse.json({ subject, body });
   } catch (err) {
     console.error("bulk-email error:", err);

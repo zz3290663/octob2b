@@ -30,6 +30,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
+  const { data: profile } = await supabase.from("profile").select("credits, is_premium").eq("id", user.id).single();
+  if (!profile?.is_premium && (profile?.credits ?? 0) <= 0) {
+    return NextResponse.json({ error: "free_limit" }, { status: 403 });
+  }
+
   const { url } = await req.json();
   if (!url) return NextResponse.json({ error: "请输入网址" }, { status: 400 });
 
@@ -70,6 +75,9 @@ export async function POST(req: NextRequest) {
     const raw = data.choices?.[0]?.message?.content || "{}";
     const report = JSON.parse(raw);
 
+    if (!profile?.is_premium) {
+      await supabase.from("profile").update({ credits: (profile?.credits ?? 1) - 1 }).eq("id", user.id);
+    }
     return NextResponse.json({ report, url: targetUrl });
   } catch (err) {
     console.error("client-radar error:", err);
