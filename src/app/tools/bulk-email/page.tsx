@@ -65,6 +65,11 @@ function toCSV(rows: Record<string, string>[]): string {
   ].join("\n");
 }
 
+// 把模板里的 {{字段}} 占位符替换成客户对应字段（缺失则替换为空）
+function fillTemplate(text: string, c: Record<string, string | undefined>): string {
+  return (text || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => c[key] ?? "");
+}
+
 type Step = "upload" | "configure" | "generating" | "results";
 
 interface Customer {
@@ -86,6 +91,14 @@ interface EmailResult {
   subject: string;
   body: string;
   status: "pending" | "generating" | "done" | "error";
+}
+
+interface MyTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  scenario?: string;
 }
 
 const SCENARIOS = [
@@ -143,11 +156,23 @@ export default function BulkEmailPage() {
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
   const [scenario, setScenario] = useState("reactivate");
   const [extra, setExtra] = useState("");
+  // 生成方式：ai = AI 个性化生成；template = 直接套用我保存的模板
+  const [genMode, setGenMode] = useState<"ai" | "template">("ai");
+  const [myTemplates, setMyTemplates] = useState<MyTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [results, setResults] = useState<EmailResult[]>([]);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 加载我保存的模板
+  useEffect(() => {
+    fetch("/api/templates")
+      .then((r) => r.json())
+      .then((d) => setMyTemplates(d.templates ?? []))
+      .catch(() => {});
+  }, []);
 
   const handleFile = useCallback((file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
@@ -197,6 +222,26 @@ export default function BulkEmailPage() {
 
   const handleGenerate = async () => {
     const customers = validCustomers;
+
+    // 使用我的模板：直接套用，不调用 AI
+    if (genMode === "template") {
+      const tpl = myTemplates.find((t) => t.id === selectedTemplateId);
+      if (!tpl) return;
+      setResults(
+        customers.map((c) => {
+          const cr = c as unknown as Record<string, string | undefined>;
+          return {
+            customer: c,
+            subject: fillTemplate(tpl.subject, cr),
+            body: fillTemplate(tpl.body, cr),
+            status: "done" as const,
+          };
+        })
+      );
+      setStep("results");
+      return;
+    }
+
     setResults(customers.map((c) => ({ customer: c, subject: "", body: "", status: "pending" })));
     setProgress({ current: 0, total: customers.length });
     setStep("generating");
@@ -514,7 +559,93 @@ export default function BulkEmailPage() {
           </div>
         </div>
 
+        {/* 生成方式 */}
+        <div className="bg-white rounded-xl border p-6 mb-6">
+          <p className="text-sm font-medium text-gray-700 mb-4">生成方式</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setGenMode("ai")}
+              className={`text-left p-4 rounded-xl border transition-colors ${
+                genMode === "ai" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <p className="text-sm font-medium text-gray-800">🤖 AI 生成个性化邮件</p>
+              <p className="text-xs text-gray-500 mt-1">按场景为每位客户单独生成</p>
+            </button>
+            <button
+              onClick={() => setGenMode("template")}
+              className={`text-left p-4 rounded-xl border transition-colors ${
+                genMode === "template" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <p className="text-sm font-medium text-gray-800">📄 使用我的模板</p>
+              <p className="text-xs text-gray-500 mt-1">套用已保存模板，不调用 AI</p>
+            </button>
+          </div>
+        </div>
+
+        {/* 我的模板选择 */}
+        {genMode === "template" && (
+          <div className="bg-white rounded-xl border p-6 mb-6">
+            <p className="text-sm font-medium text-gray-700 mb-1">选择模板</p>
+            <p className="text-xs text-gray-400 mb-3">
+              在「生成完成」页把满意的邮件点「存模板」即可在此选用
+            </p>
+            {myTemplates.length === 0 ? (
+              <p className="text-sm text-gray-500 bg-gray-50 border rounded-lg px-4 py-3">
+                还没有保存的模板。可先用 AI 生成一封满意的邮件并「存模板」，或到
+                <Link href="/tools/cold-email" className="text-blue-600 hover:underline mx-1">开发信工具</Link>
+                生成后保存。
+              </p>
+            ) : (
+              <>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => setSelectedTemplateId(e.target.value)}
+                  className="w-full text-sm border rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="">— 请选择模板 —</option>
+                  {myTemplates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}{t.scenario ? `（${t.scenario}）` : ""}
+                    </option>
+                  ))}
+                </select>
+
+                {selectedTemplateId && (() => {
+                  const tpl = myTemplates.find((t) => t.id === selectedTemplateId);
+                  if (!tpl) return null;
+                  return (
+                    <div className="mt-3 border rounded-lg overflow-hidden">
+                      <div className="px-4 py-2 bg-gray-50 text-xs text-gray-500 border-b">
+                        Subject：{tpl.subject || "（无主题）"}
+                      </div>
+                      <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed px-4 py-3 max-h-52 overflow-y-auto">
+                        {tpl.body}
+                      </pre>
+                    </div>
+                  );
+                })()}
+
+                <p className="text-xs text-gray-400 mt-3">
+                  💡 想让每封略有不同？在模板里用占位符 <code className="bg-gray-100 px-1 rounded">{"{{name}}"}</code>{" "}
+                  <code className="bg-gray-100 px-1 rounded">{"{{company}}"}</code>{" "}
+                  <code className="bg-gray-100 px-1 rounded">{"{{country}}"}</code>{" "}
+                  <code className="bg-gray-100 px-1 rounded">{"{{product}}"}</code>，发送时会自动替换成每位客户的对应信息。
+                </p>
+
+                <div className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 leading-relaxed">
+                  ⚠️ <span className="font-medium">完全相同的内容群发给很多人，容易被判为垃圾邮件，甚至导致邮箱被限制或封号。</span>
+                  建议：普通邮箱每天同类内容不超过 <span className="font-medium">20~30 封</span>，新号更保守（先从每天 10 封内养号）；
+                  尽量用上方占位符让每封有差异，并保持较低的退信/投诉率。
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Scenario */}
+        {genMode === "ai" && (
         <div className="bg-white rounded-xl border p-6 mb-6">
           <p className="text-sm font-medium text-gray-700 mb-4">发信场景</p>
           <div className="space-y-2">
@@ -543,8 +674,10 @@ export default function BulkEmailPage() {
             ))}
           </div>
         </div>
+        )}
 
         {/* Extra requirements */}
+        {genMode === "ai" && (
         <div className="bg-white rounded-xl border p-6 mb-6">
           <p className="text-sm font-medium text-gray-700 mb-1">
             补充要求{" "}
@@ -561,13 +694,16 @@ export default function BulkEmailPage() {
             className="w-full mt-2 text-sm border rounded-lg px-4 py-3 text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
           />
         </div>
+        )}
 
         <button
           onClick={handleGenerate}
-          disabled={validCustomers.length === 0}
+          disabled={validCustomers.length === 0 || (genMode === "template" && !selectedTemplateId)}
           className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 text-sm"
         >
-          开始生成 {validCustomers.length} 封邮件
+          {genMode === "template"
+            ? `套用模板生成 ${validCustomers.length} 封邮件`
+            : `开始生成 ${validCustomers.length} 封邮件`}
         </button>
       </main>
     );
