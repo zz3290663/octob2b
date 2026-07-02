@@ -702,8 +702,8 @@ export default function BulkEmailPage() {
           className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 text-sm"
         >
           {genMode === "template"
-            ? `套用模板生成 ${validCustomers.length} 封邮件`
-            : `开始生成 ${validCustomers.length} 封邮件`}
+            ? `套用模板 · 预览 ${validCustomers.length} 封邮件`
+            : `AI 生成 ${validCustomers.length} 封邮件`}
         </button>
       </main>
     );

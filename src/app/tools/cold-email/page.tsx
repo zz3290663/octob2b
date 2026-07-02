@@ -67,6 +67,12 @@ export default function ColdEmailPage() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
+  // 新建模板（从零手写）
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: "", subject: "", body: "" });
+  const [creating, setCreating] = useState(false);
+  const [createMsg, setCreateMsg] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
@@ -162,6 +168,34 @@ export default function ColdEmailPage() {
     setSaving(false);
   };
 
+  const handleCreateTemplate = async () => {
+    if (!createForm.name.trim() || !createForm.body.trim()) return;
+    setCreating(true);
+    setCreateMsg(null);
+    const res = await fetch("/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: createForm.name.trim(),
+        subject: createForm.subject.trim() || null,
+        body: createForm.body.trim(),
+        scenario: null,
+      }),
+    });
+    if (res.ok) {
+      setCreateMsg("保存成功 ✓");
+      await loadMyTemplates();
+      setTimeout(() => {
+        setShowCreateModal(false);
+        setCreateForm({ name: "", subject: "", body: "" });
+        setCreateMsg(null);
+      }, 900);
+    } else {
+      setCreateMsg("保存失败，请重试");
+    }
+    setCreating(false);
+  };
+
   const handleCopy = async () => {
     if (!result) return;
     await navigator.clipboard.writeText(result);
@@ -225,14 +259,23 @@ export default function ColdEmailPage() {
         {/* 我的模板 */}
         {templateTab === "mine" && (
           <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-gray-400">保存的模板可在「批量群发」里直接套用</p>
+              <button
+                onClick={() => { setCreateForm({ name: "", subject: "", body: "" }); setCreateMsg(null); setShowCreateModal(true); }}
+                className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                + 新建模板
+              </button>
+            </div>
             {loadingMine ? (
               <div className="py-8 text-center text-sm text-gray-400">加载中...</div>
             ) : myTemplates.length === 0 ? (
               <div className="py-10 text-center">
                 <p className="text-gray-400 text-sm">还没有保存的模板</p>
-                <p className="text-gray-400 text-xs mt-1">生成一封满意的邮件后，点「保存为我的模板」</p>
-                <button onClick={() => handleTabChange("system")} className="mt-4 text-sm text-blue-600 hover:underline">
-                  去用系统模板生成 →
+                <p className="text-gray-400 text-xs mt-1">可点右上角「新建模板」自己手写，或用 AI 生成后「保存为模板」</p>
+                <button onClick={() => { setCreateForm({ name: "", subject: "", body: "" }); setCreateMsg(null); setShowCreateModal(true); }} className="mt-4 text-sm text-blue-600 hover:underline">
+                  + 新建一个模板
                 </button>
               </div>
             ) : (
@@ -448,6 +491,64 @@ export default function ColdEmailPage() {
 
       {/* 升级弹窗 */}
       {showModal && <UpgradeModal onClose={() => setShowModal(false)} />}
+
+      {/* 新建模板弹窗 */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">新建模板</h3>
+            <p className="text-sm text-gray-500 mb-4">直接把你写好的邮件粘进来，保存后可在「批量群发」里选用</p>
+
+            <label className="block text-sm font-medium text-gray-700 mb-1">模板名称 <span className="text-red-500">*</span></label>
+            <input
+              value={createForm.name}
+              onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="如：太阳能板开发信"
+              className="w-full px-4 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-3"
+              autoFocus
+            />
+
+            <label className="block text-sm font-medium text-gray-700 mb-1">邮件主题 <span className="text-gray-400 font-normal">（可选）</span></label>
+            <input
+              value={createForm.subject}
+              onChange={(e) => setCreateForm((f) => ({ ...f, subject: e.target.value }))}
+              placeholder="如：High-efficiency solar panels for {{company}}"
+              className="w-full px-4 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-3"
+            />
+
+            <label className="block text-sm font-medium text-gray-700 mb-1">邮件正文 <span className="text-red-500">*</span></label>
+            <textarea
+              value={createForm.body}
+              onChange={(e) => setCreateForm((f) => ({ ...f, body: e.target.value }))}
+              placeholder={"Dear {{name}},\n\n把你写好的邮件内容粘贴到这里..."}
+              rows={9}
+              className="w-full px-4 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-y mb-2 font-sans leading-relaxed"
+            />
+            <p className="text-xs text-gray-400 mb-3">
+              💡 可用占位符 <code className="bg-gray-100 px-1 rounded">{"{{name}}"}</code>{" "}
+              <code className="bg-gray-100 px-1 rounded">{"{{company}}"}</code>{" "}
+              <code className="bg-gray-100 px-1 rounded">{"{{country}}"}</code>{" "}
+              <code className="bg-gray-100 px-1 rounded">{"{{product}}"}</code>，批量发送时会自动替换成每位客户的信息。
+            </p>
+
+            {createMsg && (
+              <p className={`text-sm mb-3 ${createMsg.includes("成功") ? "text-green-600" : "text-red-500"}`}>{createMsg}</p>
+            )}
+            <div className="flex gap-3">
+              <button onClick={() => setShowCreateModal(false)} className="flex-1 py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50">
+                取消
+              </button>
+              <button
+                onClick={handleCreateTemplate}
+                disabled={creating || !createForm.name.trim() || !createForm.body.trim()}
+                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                {creating ? "保存中..." : "保存模板"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 保存模板弹窗 */}
       {showSaveModal && (
