@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/encryption";
-import { sendEmail, verifyConnection } from "@/lib/mailer";
+import { sendEmail, verifyConnection, friendlySmtpError } from "@/lib/mailer";
 import { NextResponse } from "next/server";
 
 export async function POST() {
@@ -44,7 +44,6 @@ export async function POST() {
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "连接失败";
-    return NextResponse.json({ error: `SMTP 连接失败：${message}` }, { status: 400 });
+    return NextResponse.json({ error: friendlySmtpError(err) }, { status: 400 });
   }
 }

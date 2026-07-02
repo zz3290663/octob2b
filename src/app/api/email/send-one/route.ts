@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/encryption";
-import { sendEmail } from "@/lib/mailer";
+import { sendEmail, friendlySmtpError } from "@/lib/mailer";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -80,12 +80,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "发送失败";
+    const rawMessage = err instanceof Error ? err.message : "发送失败";
     await supabase
       .from("email_sends")
-      .update({ status: "failed", error_message: message })
+      .update({ status: "failed", error_message: rawMessage })
       .eq("id", record.id);
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: friendlySmtpError(err) }, { status: 500 });
   }
 }
