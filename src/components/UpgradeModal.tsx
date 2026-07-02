@@ -15,7 +15,7 @@ export default function UpgradeModal({ onClose }: { onClose: () => void }) {
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border">
             <div>
               <p className="font-medium text-gray-900">购买兑换码</p>
-              <p className="text-sm text-gray-500">加微信：<span className="font-mono select-all">tonggev8</span></p>
+              <p className="text-sm text-gray-500">加微信</p>
             </div>
             <p className="text-sm text-gray-500">按需购买</p>
           </div>
