@@ -57,7 +57,7 @@ export default function RedeemPage() {
         )}
 
         <p className="text-xs text-gray-400 text-center mt-6">
-          没有兑换码？加微信购买：<span className="font-medium text-gray-600 select-all">tonggev8</span>
+          没有兑换码？加微信
         </p>
       </div>
     </main>
