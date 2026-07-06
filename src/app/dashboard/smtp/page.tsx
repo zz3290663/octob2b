@@ -191,6 +191,30 @@ export default function SmtpConfigPage() {
         <p className="text-sm text-gray-500 mt-1">配置你自己的邮箱，批量邮件将从该邮箱发出</p>
       </div>
 
+      {/* 防封指南 */}
+      <details className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 group">
+        <summary className="cursor-pointer list-none flex items-center justify-between">
+          <span className="text-sm font-semibold text-blue-900">🛡️ 怕主邮箱被封？用「专用发信邮箱」（强烈建议）</span>
+          <span className="text-blue-400 text-xs group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div className="mt-4 text-sm text-blue-900/90 space-y-3 leading-relaxed">
+          <p>
+            群发开发信有被判垃圾邮件、甚至封号的风险。<span className="font-medium">最稳妥的做法不是用别人的邮箱代发，而是给开发信单独配一个「专用发信邮箱」，把风险和你的主邮箱隔离开：</span>
+          </p>
+          <ol className="space-y-2 list-decimal list-inside">
+            <li>另注册一个<span className="font-medium">子域名或近似域名</span>（如 <code className="bg-white px-1 rounded">mail.yourcompany.com</code> 或 <code className="bg-white px-1 rounded">yourcompany-sales.com</code>），专门用来发开发信，不要用公司主邮箱。</li>
+            <li>给这个域名配好 <span className="font-medium">SPF / DKIM / DMARC</span> 认证（在域名服务商后台按邮箱服务商的指引添加，能大幅提高送达率）。</li>
+            <li>用这个专用邮箱的 SMTP 信息填到下面即可。</li>
+          </ol>
+          <p className="bg-white/60 rounded-lg px-3 py-2">
+            <span className="font-medium">好处：</span>就算这个专用域名被搞臭了，你的<span className="font-medium">主邮箱和主域名毫发无伤</span>；发件人仍是你自己的身份，可信度和送达率都高。再配合每天限量（新号先每天 10 封内、老号 20–30 封）就更安全。
+          </p>
+          <p className="text-xs text-blue-800/80">
+            ⚠️ 注意：让第三方代发、或发件人与回复邮箱域名不一致，反而是垃圾邮件的典型特征，并不能真正防封，还可能降低送达率。
+          </p>
+        </div>
+      </details>
+
       {/* 快速选择邮件服务商 */}
       <div className="bg-white rounded-xl border p-6 mb-6">
         <p className="text-sm font-medium text-gray-700 mb-3">快速套用配置</p>
