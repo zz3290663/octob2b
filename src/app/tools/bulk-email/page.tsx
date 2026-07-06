@@ -101,6 +101,13 @@ interface MyTemplate {
   scenario?: string;
 }
 
+interface SmtpAccount {
+  id: string;
+  label: string;
+  sender_email: string;
+  is_verified: boolean;
+}
+
 const SCENARIOS = [
   { value: "cold_classic",   label: "冷开发信经典款", desc: "首次联系陌生客户，直击痛点" },
   { value: "company_intro",  label: "专业公司介绍款", desc: "展示实力，建立专业供应商形象" },
@@ -171,6 +178,19 @@ export default function BulkEmailPage() {
     fetch("/api/templates")
       .then((r) => r.json())
       .then((d) => setMyTemplates(d.templates ?? []))
+      .catch(() => {});
+  }, []);
+
+  // 加载我的发信邮箱（默认选中第一个已验证的）
+  useEffect(() => {
+    fetch("/api/smtp/config")
+      .then((r) => r.json())
+      .then((d) => {
+        const list: SmtpAccount[] = d.configs ?? [];
+        setMyEmails(list);
+        const firstVerified = list.find((e) => e.is_verified);
+        if (firstVerified) setSelectedEmailId(firstVerified.id);
+      })
       .catch(() => {});
   }, []);
 
@@ -326,6 +346,8 @@ export default function BulkEmailPage() {
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
   const [showSendModal, setShowSendModal] = useState(false);
   const [ccEmail, setCcEmail] = useState("");
+  const [myEmails, setMyEmails] = useState<SmtpAccount[]>([]);
+  const [selectedEmailId, setSelectedEmailId] = useState("");
   const [sendResults, setSendResults] = useState<Record<number, "sent" | "failed">>({});
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ subject: "", body: "" });
@@ -421,6 +443,7 @@ export default function BulkEmailPage() {
             subject: r.subject,
             content: r.body,
             cc: ccEmail.trim() || undefined,
+            smtpConfigId: selectedEmailId || undefined,
           }),
         });
         const data = await res.json();
@@ -774,6 +797,28 @@ export default function BulkEmailPage() {
               共 <span className="font-medium text-blue-600">{doneCount}</span> 封邮件，每封间隔 30 秒
             </p>
 
+            {/* 用哪个邮箱发 */}
+            <div className="mb-4">
+              <label className="text-xs font-medium text-gray-600 block mb-1">用哪个邮箱发送</label>
+              {myEmails.filter(e => e.is_verified).length === 0 ? (
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  还没有已验证的发信邮箱，请先到
+                  <Link href="/dashboard/smtp" className="text-blue-600 hover:underline mx-1">邮箱配置</Link>
+                  添加并测试通过。
+                </p>
+              ) : (
+                <select
+                  value={selectedEmailId}
+                  onChange={(e) => setSelectedEmailId(e.target.value)}
+                  className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  {myEmails.filter(e => e.is_verified).map((e) => (
+                    <option key={e.id} value={e.id}>{e.label}（{e.sender_email}）</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
             {/* 发送时间选择 */}
             <div className="space-y-2 mb-4">
               <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${sendMode === "now" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}>
@@ -834,13 +879,16 @@ export default function BulkEmailPage() {
             </div>
 
             <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
-              ⚠️ 每天最多发送 50 封 · 发送过程中请保持页面开启
+              ⚠️ 每个邮箱每天最多发送 50 封 · 发送过程中请保持页面开启
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowSendModal(false)} className="flex-1 py-2.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50">取消</button>
               <button
                 onClick={handleConfirmSend}
-                disabled={sendMode === "scheduled" && (!scheduledTime || new Date(scheduledTime).getTime() <= Date.now())}
+                disabled={
+                  !selectedEmailId ||
+                  (sendMode === "scheduled" && (!scheduledTime || new Date(scheduledTime).getTime() <= Date.now()))
+                }
                 className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
               >
                 {sendMode === "now" ? "确认发送" : "设置定时"}

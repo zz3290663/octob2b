@@ -3,17 +3,28 @@ import { decrypt } from "@/lib/encryption";
 import { sendEmail, friendlySmtpError } from "@/lib/mailer";
 import { NextRequest, NextResponse } from "next/server";
 
+// 每个发信邮箱每天最多发送数量
+const DAILY_LIMIT_PER_EMAIL = 50;
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
-  const { customer_email, customer_company, subject, content, cc } = await req.json();
+  const { customer_email, customer_company, subject, content, cc, smtpConfigId } = await req.json();
   if (!customer_email || !subject || !content) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
   }
 
-  // 检查今日发送数量限制（50封/天）
+  // 获取指定发信邮箱（不传则取最早的一条）
+  let cfgQuery = supabase.from("smtp_configs").select("*").eq("user_id", user.id);
+  cfgQuery = smtpConfigId ? cfgQuery.eq("id", smtpConfigId) : cfgQuery.order("updated_at", { ascending: true }).limit(1);
+  const { data: cfg } = await cfgQuery.maybeSingle();
+
+  if (!cfg) return NextResponse.json({ error: "请先配置 SMTP 发件信息" }, { status: 400 });
+  if (!cfg.is_verified) return NextResponse.json({ error: "该发信邮箱尚未通过测试验证" }, { status: 400 });
+
+  // 检查该邮箱今日发送数量限制
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
@@ -21,22 +32,13 @@ export async function POST(req: NextRequest) {
     .from("email_sends")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
+    .eq("smtp_config_id", cfg.id)
     .eq("status", "sent")
     .gte("sent_at", todayStart.toISOString());
 
-  if ((count ?? 0) >= 50) {
-    return NextResponse.json({ error: "已达今日发送上限（50封），明天再试" }, { status: 429 });
+  if ((count ?? 0) >= DAILY_LIMIT_PER_EMAIL) {
+    return NextResponse.json({ error: `该邮箱已达今日发送上限（${DAILY_LIMIT_PER_EMAIL} 封），换个邮箱或明天再试` }, { status: 429 });
   }
-
-  // 获取 SMTP 配置
-  const { data: cfg } = await supabase
-    .from("smtp_configs")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!cfg) return NextResponse.json({ error: "请先配置 SMTP 发件信息" }, { status: 400 });
-  if (!cfg.is_verified) return NextResponse.json({ error: "请先通过 SMTP 测试验证" }, { status: 400 });
 
   const smtpConfig = {
     sender_name: cfg.sender_name,
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
     .from("email_sends")
     .insert({
       user_id: user.id,
+      smtp_config_id: cfg.id,
       customer_email,
       customer_company: customer_company || null,
       subject,
